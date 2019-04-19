@@ -210,3 +210,8 @@ class DataSet(object):
         self.__type = type
         if initialize_components:
             self.__components.clear()
+
+    def setDirty(self, component_type, is_dirty):
+        comp = self.getComponentForComponentType(component_type)
+        if comp is not None:
+            comp.setDirty(is_dirty)

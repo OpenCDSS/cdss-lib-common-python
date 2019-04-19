@@ -236,3 +236,6 @@ class DataSetComponent(object):
         :param list_source: The source of the list for the component
         """
         self.__list_source = list_source
+
+    def setVisible(self, is_visible):
+        self.__is_visible = is_visible
