@@ -412,8 +412,7 @@ class PropList(object):
             self.__lastLineNumberRead = 0
             length = 0
             with open(self.__persistentName) as f:
-                while True:
-                    line = f.readline()
+                for line in f:
                     line.strip()
                     self.__lastLineNumberRead += 1
                     if continuation:
@@ -468,6 +467,7 @@ class PropList(object):
                         if includeLiterals:
                             literalCount += 1
                             self.append("Literal" + str(literalCount), line, True)
+                        continue
                     if line[0] == '[':
                         # Block indicator - contents of [] will be prepended to property names
                         if line.index("${") >= 0:

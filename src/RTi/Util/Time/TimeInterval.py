@@ -65,6 +65,8 @@
 #  ----------------------------------------------------------------------------
 # EndHeader
 
+import logging
+
 
 class TimeInterval(object):
     # The TimeInterval class provide methods to convert intervals from
@@ -93,14 +95,14 @@ class TimeInterval(object):
 
     def __init__(self):
         # THe string associated with the base interval (e.g., "Month").
-        self._intervalBaseString = ""
+        self.__intervalBaseString = ""
         # The string associated with the interval multiplier (may be "" if
         # not specified in string used with the constructor).
-        self._intervalMultString = ""
+        self.__intervalMultString = ""
         # The base data interval.
-        self._intervalBase = 0
+        self.__intervalBase = 0
         # The data interval multiplier.
-        self._intervalMult = 0
+        self.__intervalMult = 0
 
         self.init()
 
@@ -108,7 +110,101 @@ class TimeInterval(object):
         """
         Initialize the data.
         """
-        self._intervalBase = 0
-        self._intervalBaseString = ""
-        self._intervalMult = 0
-        self._intervalMultString = ""
+        self.__intervalBase = 0
+        self.__intervalBaseString = ""
+        self.__intervalMult = 0
+        self.__intervalMultString = ""
+
+    @staticmethod
+    def parseInterval(intervalString):
+        """
+        Parse an interval string like "6Day" into its parts and return as a
+        TimeInterval.  If the multiplier is not specified, the value returned from
+        getMultiplierString() will be "", even if the getMultiplier() is 1.
+        :param intervalString: Time series interval as a string, containing
+        interval string and an optional multiplier.
+        :return: The time interval that is parsed from the string.
+        """
+        logger = logging.getLogger("StateMod")
+        routine = "TimeInterval.parseInterval"
+        digitCount = 0  # Count of digits at start of the interval string
+        dl = 50
+        i = 0
+        length = len(intervalString)
+
+        interval = TimeInterval()
+
+        # Need to strip of any leading digits.
+
+        while i < length:
+            if intervalString[i].isdigit():
+                digitCount += 1
+                i += 1
+            else:
+                # We have reached the end of the digit part of the string
+                break
+
+        if digitCount == 0:
+            #
+            # This string had no leading digits, interpret as one.
+            #
+            interval.setMultiplier(1)
+        elif digitCount == length:
+            #
+            # The whole string is a digit, default to hourly (legacy behavior)
+            #
+            interval.setBase(TimeInterval.HOUR)
+            interval.setMultiplier(int(intervalString))
+            return interval
+        else:
+            intervalMultString = intervalString[0:digitCount]
+            interval.setMultiplier(int(intervalMultString))
+            interval.setMultiplierString(intervalMultString)
+
+        # Now parse out the Base interval
+        intervalBaseString = intervalString[:digitCount].strip()
+        intervalBaseStringUpper = intervalBaseString.upper()
+        if (intervalBaseStringUpper.startswith("DAY")) or (intervalBaseStringUpper.startswith("DAI")):
+            interval.setBaseString(intervalBaseString)
+            interval.setBase(TimeInterval.DAY)
+        elif (intervalBaseStringUpper.startswith("MON")):
+            interval.setBaseString(intervalBaseString)
+            interval.setBase(TimeInterval.MONTH)
+        else:
+            if len(intervalString) == 0:
+                logger.warning("No interval specified.")
+            else:
+                logger.warning("Unrecognized interval \"{}\"".format(intervalString[:digitCount]))
+            return
+        return interval
+
+    def setBase(self, base):
+        """
+        Set the interval base.
+        :param base: Time series interval.
+        :return: Zero if successful, non-zero if not.
+        """
+        self.__intervalBase = base
+
+    def setBaseString(self, base_string):
+        """
+        Set the interval base string. This is normally only called by other methods within this class.
+        :param base_string: Time series interval base as string.
+        """
+        if base_string is not None:
+            self.__intervalBaseString = base_string
+
+    def setMultiplier(self, mult):
+        """
+        Set the interval multiplier
+        :param mult: Time series interval
+        """
+        self.__intervalMult = mult
+
+    def setMultiplierString(self, multiplier_string):
+        """
+        Set the interval multiplier string.  This is normally only called by other methods within this class.
+        :param multiplier_string: Time series interval base as string.
+        """
+        if multiplier_string is not None:
+            self.__intervalMultString = multiplier_string

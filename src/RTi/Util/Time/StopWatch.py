@@ -22,6 +22,7 @@
 # NoticeEnd
 
 from datetime import datetime
+import time
 
 class StopWatch(object):
     # This class provides a way to track execution time similar to a physical stopwatch.  To
@@ -37,7 +38,7 @@ class StopWatch(object):
     def __init__(self, total = None):
 
         # Total elapsed running time in milliseconds
-        self._total_milliseconds = 0.00
+        self._total_milliseconds = float()
 
         # Start date for a StopWatch session.
         self._start_date = None
@@ -111,17 +112,17 @@ class StopWatch(object):
         Start accumulation time in the StopWatch.
         """
         self._start_set = True
-        self._start_date = datetime.now()
+        self._start_date = time.time()
 
     def stop(self):
         """
         Stop accumulating time in the StopWatch.  This does not clear the StopWatch and
         subsequent calls to "start" can be made to continue adding to the StopWatch.
         """
-        self._stop_date = datetime.now()
+        self._stop_date = time.time()
         # Compute the difference anc add to the elapsed time.
         if self._start_set:
-            add = self._stop_date.microsecond - self._start_date.microsecond
+            add = int(round(self._stop_date * 1000)) - int(round(self._start_date * 1000))
             self._total_milliseconds += add
         self._start_set = False
 
