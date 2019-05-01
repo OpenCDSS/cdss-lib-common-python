@@ -192,6 +192,16 @@ class TimeUtil(ABC):
         pass
 
     @staticmethod
+    def absoluteMonth(month, year):
+        """
+        Return the absolute month, which is the year*12 + month.
+        :param month: Month number
+        :param year: Year
+        :return: The absolute month, which is the year*12 + month.
+        """
+        return (year*12 + month)
+
+    @staticmethod
     def isLeapYear(year):
         """
         Determine whether a year is a leap year.
@@ -226,4 +236,40 @@ class TimeUtil(ABC):
             ndays = TimeUtil.MONTH_DAYS[month - 1]
             if (month == 2) and TimeUtil.isLeapYear(year):
                 ndays += 1
+        return ndays
+
+    @staticmethod
+    def numDaysInMonthFromDateTime(dt):
+        """
+        Return the number of days in a month, checking for leap year for February.
+        :param dt: The DateTime object to examine.
+        :return: The number of days in a month, or zero if an error.
+        """
+        return TimeUtil.numDaysInMonth(dt.getMonth(), dt.getYear())
+
+    @staticmethod
+    def numDaysInMonths(month0, year0, month1, year1):
+        """
+        Calculate the number of days in several months.
+        :param month0: The initial month of interest.
+        :param year0: The initial year of interest.
+        :param month1: The last month of interest.
+        :param year1: The last year of interest.
+        :return: The number of days in several months.
+        """
+        nmonths = TimeUtil.absoluteMonth(month1, year1) - TimeUtil.absoluteMonth(month0, year0) + 1
+
+        i = 0
+        month = 0
+        ndays = 0
+        year = int()
+
+        month = month0
+        year = year0
+        for i in range(nmonths):
+            ndays += TimeUtil.numDaysInMonth(month, year)
+            month += 1
+            if month == 13:
+                month = 1
+                year += 1
         return ndays

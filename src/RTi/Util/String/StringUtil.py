@@ -1,7 +1,7 @@
 # This class provides static utility routines for manipulating strings.
 
 import logging
-
+import time
 
 class StringUtil:
 
@@ -418,6 +418,8 @@ class StringUtil:
             tokens.clear()
         else:
             tokens = []
+
+        start = time.time()
 
         var = ""
         istring = 0  # Position in string to parse.

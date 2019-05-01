@@ -439,11 +439,11 @@ class TSIdent(object):
                 pos = identifier0.find("~")
                 if (pos >= 0) and (len(identifier) > (pos + 1)):
                     # Have something at the end...
-                    sub = identifier0[:pos + 1]
+                    sub = identifier0[pos + 1:]
                     pos = sub.find("~")
                     if (pos >= 0) and (len(sub) > (pos + 1)):
                         # The rest is the file...
-                        tsident.setInputName(sub[:pos + 1])
+                        tsident.setInputName(sub[pos + 1:])
 
         # Now parse the 5-part identifier...
         full_location = ""
@@ -484,15 +484,15 @@ class TSIdent(object):
             # Have a location type so split out and set, then treat the rest of the identifier
             # as the location identifier for further processing.
             locationType = identifier[0:locationTypeSepPos]
-            identifier = identifier[:locationTypeSepPos + 1]
+            identifier = identifier[locationTypeSepPos + 1:]
         if (identifier[0] == '\'') or (identifier[0] =='\"'):
-            full_location = StringUtil.readToDelim(identifier[:1], identifier[0])
+            full_location = StringUtil.readToDelim(identifier[1:], identifier[0])
             # Get the 2nd+ fields...
             posQuote2 = identifier.find("'")
             if posQuote2 > 0:
                 # Have at least one quote so assume TSID something like:
                 # LocId.Source.'DataType-some.parts.with.periods'.Interval
-                list = TSIdent.parseIdentifier_SplitWithQuotes(identifier[:len(full_location) + 1])
+                list = TSIdent.parseIdentifier_SplitWithQuotes(identifier[len(full_location) + 1:])
             else:
                 list = StringUtil.breakStringList(identifier[len(full_location) + 1], ".", 0)
             nlist1 = len(list)
@@ -567,7 +567,8 @@ class TSIdent(object):
         # Return the TSIdent object for use elsewhere...
         return tsident
 
-    def parseIdentifier_SplitWithQuotes(self, identifier):
+    @staticmethod
+    def parseIdentifier_SplitWithQuotes(identifier):
         """
         Parse a TSID that has quoted part with periods in one or more parts.
         :param identifier: TSID main part (no ~)
@@ -802,7 +803,7 @@ class TSIdent(object):
             # Now set the base and multiplier...
             if tsinterval is not None:
                 self.__interval_base = tsinterval.getBase()
-                self.__interval_mult = tsinterval.getMultipler()
+                self.__interval_mult = tsinterval.getMultiplier()
         # Else, don't do anything (leave as zero initialized values).
 
         # Now set the interval string. Use the given interval base string
@@ -916,6 +917,8 @@ class TSIdent(object):
             list = []
             sub_location = ""
             nlist = int()
+            list = StringUtil.breakStringList(full_location, TSIdent.LOCATION_SEPARATOR, 0)
+            nlist = len(list)
             if nlist >= 1:
                 # Set the main location...
                 self.setMainLocation(list[0])

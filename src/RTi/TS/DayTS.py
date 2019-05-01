@@ -124,8 +124,12 @@
 # ----------------------------------------------------------------------------
 # EndHeader
 
+import logging
+
 from RTi.TS.TS import TS
+from RTi.Util.Time.DateTime import DateTime
 from RTi.Util.Time.TimeInterval import TimeInterval
+from RTi.Util.Time.TimeUtil import TimeUtil
 
 
 class DayTS(TS):
@@ -148,6 +152,112 @@ class DayTS(TS):
 
         super().__init__()
         self.initialize_DayTS()
+
+    def allocateDataSpace(self):
+        """
+        Allocate the data space for the time series.  The start and end dates and the
+        data interval multiplier must have been set.  Initialize the space with the missing data value.
+        """
+        self.allocateDataSpaceFromNum(self._missing)
+
+    def allocateDataSpaceFromNum(self, value):
+        """
+        Allocate the data space.  The start and end dates and the interval multiplier should have been set.
+        :param value: The value to initialize the time series.
+        :return: 0 if successful, 1 if failure.
+        """
+        logger = logging.getLogger("StateMod")
+        routine = "DayTS.allocateDataSpace"
+        ndays_in_month = int()
+        nmonths = 0
+        nvals = int()
+
+        if (self._date1 == None) or (self._date2 == None):
+            logger.warning("No dates set for memory allocation.")
+            return 1
+        if self._data_interval_mult != 1:
+            # Do not know how to handle N-day interval...
+            message = "Only know how to handle 1-day data, not " + str(self._data_interval_mult) + "Day"
+            logger.warning(message)
+            return 1
+
+        if nmonths == 0:
+            logger.warning("TS has 0 months POR, maybe dates haven't been set yet")
+            return 1
+
+        self._data = [[float()]]*nmonths
+        if self._has_data_flags:
+            self._dataFlags = [[str()]]*nmonths
+
+        # May need to catch an exception here in case we run out of memory.
+
+        # Set the counter date to match the starting month. This data is used to
+        # to determine the number of days in each month.
+
+        date = DateTime(DateTime.DATE_FAST)
+        date.setMonth(self._date1.getMonth())
+        date.setYear(self._date1.getYear())
+
+        iday = 0
+        for imon in range(nmonths):
+            ndays_in_month = TimeUtil.numDaysInMonthFromDateTime(date)
+            # Handle 1-day data, otherwise an excpetion was thrown above.
+            # Here would change the number of values if N-day was supported.
+            nvals = ndays_in_month
+            self._data[imon] = [float()]*nvals
+
+            # Now fill with the missing data value for each day in month...
+
+            for iday in range(nvals):
+                self._data[imon][iday] = value
+                if self._has_data_flags:
+                    self._dataFlags[imon][iday] = ""
+
+            date.addMonth(1)
+
+        nactual = DayTS.calculateDataSize(self._date1, self._date2, self._data_interval_mult)
+        self.setDataSize(nactual)
+
+        date = None
+        routine = None
+        return 0
+
+    @staticmethod
+    def calculateDataSize(start_date, end_date, interval_mult):
+        """
+        Determine the number of points between two dates for the given interval multiplier.
+        :param start_date: The first date of the period.
+        :param end_date: The last date of the period.
+        :param interval_mult: The time series data interval multiplier.
+        :return: The number of data points for a day time series
+        given the data interval multiplier for the specified period.
+        """
+        logger = logging.getLogger("StateMod")
+        routine = "DayTS.calculateDataSize"
+        datasize = 0
+
+        if start_date == None:
+            logger.warning("Start date is null")
+            return 0
+        if end_date == None:
+            logger.warning("End date is null")
+            return 0
+        if interval_mult > 1:
+            logger.warning("Greater than 1-day TS not supported")
+            return 0
+
+        # First set to the number of data in the months...
+        datasize = TimeUtil.numDaysInMonths(start_date.getMonth(), start_date.getYear(), end_date.getMonth(), end_date.getYear())
+        # Now subtract off the data at the ends that are missing...
+        # Start by subtracting the full day at the beginning of the month is not included...
+        datasize -= (start_date.getDay() - 1)
+        # Now subtract off the data at the end...
+        # Start by subtracting the full days off the end of the month...
+        ndays_in_month = TimeUtil.numDaysInMonth(end_date.getMonth(), end_date.getYear())
+        datasize -= (ndays_in_month - end_date.getDay())
+        routine = None
+        return datasize
+
 
     def initialize_DayTS(self):
         """

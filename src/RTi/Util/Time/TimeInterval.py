@@ -115,6 +115,20 @@ class TimeInterval(object):
         self.__intervalMult = 0
         self.__intervalMultString = ""
 
+    def getBase(self):
+        """
+        Return the interval base (see TimeInterval.INTERVAL*).
+        :return: The interval base (see TimeInterval.INTERVAL*).
+        """
+        return self.__intervalBase
+
+    def getMultiplier(self):
+        """
+        Return the interval multiplier.
+        :return: The interval multiplier.
+        """
+        return self.__intervalMult
+
     @staticmethod
     def parseInterval(intervalString):
         """
@@ -157,12 +171,12 @@ class TimeInterval(object):
             interval.setMultiplier(int(intervalString))
             return interval
         else:
-            intervalMultString = intervalString[0:digitCount]
+            intervalMultString = intervalString[digitCount:]
             interval.setMultiplier(int(intervalMultString))
             interval.setMultiplierString(intervalMultString)
 
         # Now parse out the Base interval
-        intervalBaseString = intervalString[:digitCount].strip()
+        intervalBaseString = intervalString[digitCount:].strip()
         intervalBaseStringUpper = intervalBaseString.upper()
         if (intervalBaseStringUpper.startswith("DAY")) or (intervalBaseStringUpper.startswith("DAI")):
             interval.setBaseString(intervalBaseString)
@@ -174,7 +188,7 @@ class TimeInterval(object):
             if len(intervalString) == 0:
                 logger.warning("No interval specified.")
             else:
-                logger.warning("Unrecognized interval \"{}\"".format(intervalString[:digitCount]))
+                logger.warning("Unrecognized interval \"{}\"".format(intervalString[digitCount:]))
             return
         return interval
 

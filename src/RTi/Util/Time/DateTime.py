@@ -486,6 +486,8 @@ class DateTime(object):
 
     def __init__(self, flag=None, date=None, dateTime=None):
 
+        logger = logging.getLogger("StateMod")
+
         # Hundredths of a second (0-99)
         self.__hsecond = int()
 
@@ -547,7 +549,7 @@ class DateTime(object):
             self.initialize_DateTime_Flag(flag)
         elif date is not None:
             self.initialize_DateTime_Date(date)
-        elif dateTime is None:
+        elif dateTime is not None:
             self.initialize_DateTime_DateTime(dateTime)
 
     def addMonth(self, add):
@@ -652,6 +654,27 @@ class DateTime(object):
         """
         # since some data are public, recompute...
         return (self.__year * 12 + self.__month)
+
+    def getDay(self):
+        """
+        Return the day
+        :return: The day.
+        """
+        return self.__day
+
+    def getMonth(self):
+        """
+        Return the month
+        :return: The month
+        """
+        return self.__month
+
+    def getYear(self):
+        """
+        Return the year
+        :return: The year.
+        """
+        return self.__year
 
     def getYearDay(self):
         """

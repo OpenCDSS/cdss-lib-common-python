@@ -121,6 +121,8 @@
 # ----------------------------------------------------------------------------
 # EndHeader
 
+import logging
+
 from RTi.TS.TS import TS
 from RTi.Util.Time.TimeInterval import TimeInterval
 
@@ -159,6 +161,98 @@ class MonthTS(TS):
         self._pos[1] = 0
         self._min_amon = 0
         self._max_amon = 0
+
+    def allocateDataSpace(self):
+        """
+        Allocate the data space for the time series.  The start and end dates and the
+        data interval multiplier must have been set.  Initialize the space with the missing data value.
+        """
+        self.allocateDataSpaceFromNum(self._missing)
+
+    def allocateDataSpaceFromNum(self, value):
+        """
+        Allocate the data space for the time series.  The start and end dates and the
+        data interval multiplier must have been set.  Fill with the specified data value.
+        :param value: Value to initialize data space.
+        :return: 1 if the allocation fails, 0 if success.
+        """
+        logger = logging.getLogger("StateMod")
+        routine = "MonthTS.allocateDataSpace"
+        iYear = 0
+        nyears = 0
+
+        if (self._date1 == None) or (self._date2 == None):
+            logger.warning("Dates have not been set. Cannot allocate data space.")
+            return 1
+        if (self._data_interval_mult != 1):
+            # Do not know how to handle N-month interval...
+            logger.warning("Only know how to handle 1 month data, not " + str(self._data_interval_mult) + "-month")
+            return 1
+
+        nyears = self._date2.getYear() - self._date1.getYear()
+
+        if nyears == 0:
+            logger.warning("TS has 0 years POR, maybe dates haven't been set yet")
+            return 1
+
+        self._data = [[float()]]*nyears
+        if self._has_data_flags:
+            self._dataFlags = [[str()]]*nyears
+
+        # Allocate memory...
+
+        iMonth = 12
+        nvals = 12
+        for iYear in range(nyears):
+            self._data[iYear] = [float()]*nvals
+            if self._has_data_flags:
+                self._dataFlags[iYear] = [str()]*nvals
+
+            # Now fill with the missing data value...
+
+            for iMonth in range(nvals):
+                self._data[iYear][iMonth] = value
+                if self._has_data_flags:
+                    self._dataFlags[iYear][iMonth] = ""
+
+        # Set the data size...
+        datasize = MonthTS.calculateDataSize(self._date1, self._date2, self._data_interval_mult)
+        self.setDataSize(datasize)
+
+        # Set the limits used for set/get routines...
+        self._min_amon = self._date1.getAbsoluteMonth()
+        self._max_amon = self._date2.getAbsoluteMonth()
+
+        routine = None
+        return 0
+
+    @staticmethod
+    def calculateDataSize(start_date, end_date, interval_mult):
+        """
+        Calculate and return the number of data points that have been allocated.
+        :param start_date: Teh first date of the period.
+        :param end_date: The last date of the period.
+        :param interval_mult: The time series data interval multiplier.
+        :return: The number of data points for a month time series
+        given the data interval multiplier for the specified period, including missing data.
+        """
+        logger = logging.getLogger("StateMod")
+        routine = "MonthTS.calculateDataSize"
+        datasize = 0
+
+        if start_date is None:
+            logger.warning("Start date is null")
+            return 0
+        if end_date is None:
+            logger.warning("End date is null")
+            return 0
+        if interval_mult != 1:
+            logger.warning("Do no know how to handle N-month time series")
+            return 0
+
+        datasize = end_date.getAbsoluteMonth() - start_date.getAbsoluteMonth() + 1
+        routine = None
+        return datasize
 
     def setDataValue(self, date, value):
         """

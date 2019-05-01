@@ -543,6 +543,13 @@ class TS(object):
         self._data_interval_base_original = base
         self._data_interval_mult_original = mult
 
+    def setDataSize(self, data_size):
+        """
+        Set the number of data points including the full period. This should be called by refresh()
+        :param data_size: Number of data points in the time series.
+        """
+        self._data_size = data_size
+
     def setDataType(self, data_type):
         """
         Set the data type
