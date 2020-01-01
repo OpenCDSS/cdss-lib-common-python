@@ -2,65 +2,32 @@
 
 # NoticeStart
 #
-# CDSS Common Java Library
-# CDSS Common Java Library is a part of Colorado's Decision Support Systems (CDSS)
+# CDSS Common Python Library
+# CDSS Common Python Library is a part of Colorado's Decision Support Systems (CDSS)
 # Copyright (C) 1994-2019 Colorado Department of Natural Resources
 #
-# CDSS Common Java Library is free software:  you can redistribute it and/or modify
+# CDSS Common Python Library is free software:  you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
 #     the Free Software Foundation, either version 3 of the License, or
 #     (at your option) any later version.
 #
-#     CDSS Common Java Library is distributed in the hope that it will be useful,
+#     CDSS Common Python Library is distributed in the hope that it will be useful,
 #     but WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #     GNU General Public License for more details.
 #
 #     You should have received a copy of the GNU General Public License
-#     along with CDSS Common Java Library.  If not, see <https://www.gnu.org/licenses/>.
+#     along with CDSS Common Python Library.  If not, see <https://www.gnu.org/licenses/>.
 #
 # NoticeEnd
 
- # ----------------------------------------------------------------------------
- # Prop - use to hold an object's properties
- # ----------------------------------------------------------------------------
- # Notes:	(1)	This is useful for program or other component
-	# 		information.
-	# 	(2)	PropList manages a list of these properties.
- # ----------------------------------------------------------------------------
- # History:
- #
- # Sep 1997?	Steven A. Malers,	Initial version.  Start dabbling to
-	# 	Riverside Technology,	formalize update of legacy setDef/
-	# 	inc.			getDef code.
- # 02 Feb 1998	SAM, RTi		Get all the Prop* classes working
-	# 				together and start to use in
-	# 				production.
- # 24 Feb 1998	SAM, RTi		Add the javadoc comments.
- # 13 Apr 1999	SAM, RTi		Add finalize.
- # 10 May 2001	SAM, RTi		Add ability to expand the property
-	# 				contents as per makefile and RTi
-	# 				property file.  Do so by overloading
-	# 				getValue() to take a persistent format
-	# 				flag to indicate that expansion should
-	# 				be checked.  Also add refresh().
- # 2002-02-03	SAM, RTi		Change long _flags integer _how_set and
-	# 				clean up the SET_* values - use with
-	# 				PropList's _how_set flag to streamline
-	# 				tracking user input.  Change methods to
-	# 				be of void type rather than return an
-	# 				int (since the return type is of no
-	# 				importance).
- # 2004-02-19	J. Thomas Sapienza, RTi	Implements the Comparable interface so
-	# 				that a PropList can be sorted.
- # 2004-05-10	SAM, RTi		Add a "how set" option of
-	# 				SET_AT_RUNTIME_FOR_USER.
- # 2005-10-20	JTS, RTi		Added a "how set" option of
-	# 				SET_HIDDEN for Properties that are
-	# 				always behind-the-scenes, which should
-	# 				never be saved, viewed, or known by
-	# 				users.
- # ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+# Prop - use to hold an object's properties
+# ----------------------------------------------------------------------------
+# Notes:
+# (1)	This is useful for program or other component information.
+# (2)	PropList manages a list of these properties.
+# ----------------------------------------------------------------------------
 
 
 class Prop(object):
@@ -114,54 +81,54 @@ class Prop(object):
     # hidden properties, and should never be able to save hidden properties to a persistent source.
     SET_HIDDEN = 5
 
-    def __init__(self, howSet=None, intKey=None, key=None, contents=None, value=None):
+    def __init__(self, how_set=None, int_key=None, key=None, contents=None, value=None):
         # Indicates whether property is read from a persistent source, set internally as a
         # run-time default, or is set at runtime by the user.
-        self.__howSet = int()
+        self.how_set = int()
 
         # Integer key for faster lookups.
-        self.__intKey = int()
+        self.int_key = int()
 
         # Indicate whether the property is a literal string.
         # By default the property is a normal property.
-        self.__isLiteral = False
+        self.isLiteral = False
 
         # String to look up property.
-        self.__key = ""
+        self.key = ""
 
         # Contents of property (anything derived from Object).  This may be a string or another
         # object.  If a string, it contains the value before expanding wildcards, etc.
-        self.__contents = None
+        self.contents = None
 
         # Value of the object as a string.  In most cases, the object will be a string.  The
         # value is the fully-expanded string (wildcards and other variables are expanded).  If not
         # a string, this may contain the toString() representation.
-        self.__value = ""
+        self.value = ""
 
-        if howSet is not None:
-            if intKey is not None:
+        if how_set is not None:
+            if int_key is not None:
                 if value is not None:
                     # Construct using a string key, an integer key, and both contents and value.
-                    # Prop(key, intKey, contents, value, howSet)
-                    self.initialize(howSet, intKey, key, contents, value)
+                    # Prop(key, int_key, contents, value, how_set)
+                    self.initialize(how_set, int_key, key, contents, value)
                 else:
                     # Construct using a string key, an integer key, string contents, and specify modifier flags.
-                    # Prop(key, intKey, contents, howSet)
-                    self.initialize(howSet, intKey, key, contents, contents)
+                    # Prop(key, int_key, contents, how_set)
+                    self.initialize(how_set, int_key, key, contents, contents)
             else:
                 # Construct using a string key, and both contents and string value.
-                # Prop(key, contents, value, howSet)
-                self.initialize(howSet, 0, key, contents, value)
-        elif howSet is None:
-            if intKey is not None:
+                # Prop(key, contents, value, how_set)
+                self.initialize(how_set, 0, key, contents, value)
+        elif how_set is None:
+            if int_key is not None:
                 if value is not None:
                     # Construct using a string key, an integer key, and both contents and value.
-                    # Prop(key, intKey, key, contents, value)
-                    self.initialize(Prop.SET_UNKNOWN, intKey, key, contents, value)
+                    # Prop(key, int_key, key, contents, value)
+                    self.initialize(Prop.SET_UNKNOWN, int_key, key, contents, value)
                 else:
                     # Construct using a string key, an integer key, and string contents.
-                    # Prop(key, intKey, contents)
-                    self.initialize(Prop.SET_UNKNOWN, intKey, key, contents, contents)
+                    # Prop(key, int_key, contents)
+                    self.initialize(Prop.SET_UNKNOWN, int_key, key, contents, contents)
             else:
                 if value is not None:
                     # Construct using a string key, and both contents and string value.
@@ -176,46 +143,46 @@ class Prop(object):
             # Prop()
             self.initialize(Prop.SET_UNKNOWN, 0, "", None, None)
 
-    def getContents(self):
+    def get_contents(self):
         """
         Return the contents (Object) for the property.
         :return: The contents (Object) for the property (note: the original is returned, not a copy).
         """
-        return self.__contents
+        return self.contents
 
-    def getKey(self):
+    def get_key(self):
         """
         Return the string key for the property
         :return: The string key for the property.
         """
-        return self.__key
+        return self.key
 
-    def getValue(self, props=None):
+    def get_value(self, props=None):
         # This will expand contents if necessary...
         # self.refresh( props )
-        return self.__value
+        return self.value
 
-    def initialize(self, howSet, intKey, key, contents, value):
+    def initialize(self, how_set, int_key, key, contents, value):
         """
         initialize member data
-        :param howSet: Indicates how the property is being set.
-        :param intKey: Integer to use to look up the property (integer keys can be used
+        :param how_set: Indicates how the property is being set.
+        :param int_key: Integer to use to look up the property (integer keys can be used
         in place of strings for lookups).
         :param key: String to use as key to look up property.
         :param contents: The contents of the property (in this case the same as the
         :param value: The value of the property as a string.
         """
-        self.__howSet = howSet
-        self.__intKey = intKey
+        self.how_set = how_set
+        self.int_key = int_key
         if key == None:
-            self.__key = ""
+            self.key = ""
         else:
-            self.__key = key
-        self.__contents = contents
+            self.key = key
+        self.contents = contents
         if value == None:
-            self.__value = ""
+            self.value = ""
         else:
-            self.__value = value
+            self.value = value
 
     # def refresh(self, props):
     #     """
@@ -227,20 +194,20 @@ class Prop(object):
     #     if persistent_format == PropList.FORMAT_MAKEFILE or persistent_format == PropList.FORMAT_NWSRFS or \
     #         persistent_format == PropList.FORMAT_PROPERTIES:
     #         # Try to expand the contents...
-    #         if isinstance(self.__contents, str):
-    #             self.__value = PropListManager.resolveContentsValue(props, str(self.__contents))
+    #         if isinstance(self.contents, str):
+    #             self.value = PropListManager.resolveContentsValue(props, str(self.contents))
 
-    def setHowSet(self, how_set):
+    def set_how_set(self, how_set):
         """
         Set how the property is being set (see SET_*)
         :param how_set: Set how the property is being set.
         """
-        self.__howSet = how_set
+        self.how_set = how_set
 
-    def setIsLiteral(self, isLiteral):
+    def set_is_literal(self, is_literal):
         """
         Indicate whether the property is a literal string.
-        :param isLiteral: True if the property is a literal string, False if a normal
+        :param is_literal: True if the property is a literal string, False if a normal
         property.
         """
-        self.__isLiteral = isLiteral
+        self.is_literal = is_literal

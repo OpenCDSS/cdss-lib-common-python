@@ -2,27 +2,28 @@
 
 # NoticeStart
 
-# CDSS Common Java Library
-# CDSS Common Java Library is a part of Colorado's Decision Support Systems (CDSS)
+# CDSS Common Python Library
+# CDSS Common Python Library is a part of Colorado's Decision Support Systems (CDSS)
 # Copyright (C) 1994-2019 Colorado Department of Natural Resources
 #
-# CDSS Common Java Library is free software:  you can redistribute it and/or modify
+# CDSS Common Python Library is free software:  you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
 #     the Free Software Foundation, either version 3 of the License, or
 #     (at your option) any later version.
 #
-#     CDSS Common Java Library is distributed in the hope that it will be useful,
+#     CDSS Common Python Library is distributed in the hope that it will be useful,
 #     but WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #     GNU General Public License for more details.
 #
 #     You should have received a copy of the GNU General Public License
-#     along with CDSS Common Java Library.  If not, see <https://www.gnu.org/licenses/>.
+#     along with CDSS Common Python Library.  If not, see <https://www.gnu.org/licenses/>.
 #
 # NoticeEnd
 
 from RTi.Util.IO.DataSetComponent import DataSetComponent
 import logging
+
 
 class DataSet(object):
     """
@@ -36,37 +37,37 @@ class DataSet(object):
                  dataset_dir=None, basename=None):
 
         # Base name for data set, used to provide default file names when creating new files
-        self.__basename = ""
+        self.basename = ""
 
         # List of data components in the data set. Each component is a type that is described
         # in the lookup arrays for the data set, and has data for the component. Components are
         # hierarchical and therfore the top level components will contain groups.
 
-        self.__components = None
+        self.components = None
 
         # Array of component names, used in lookups
-        self._component_names = None
+        self.component_names = None
 
         # Array of component types (as integers), corresponding to the component names
-        self._component_types = None
+        self.component_types = None
 
         # Array of component types (as integers) that are group components.
-        self._component_groups = None
+        self.component_groups = None
 
         # Array of component types (as integers) that indicates the group components for each component.
-        self._component_group_assignments = None
+        self.component_group_assignments = None
 
         # Array of component types (as integers) that indicates the primary components for each group.
         # These components are used to get the list of object identifiers for displays and processing.
-        self._component_group_primaries = None
+        self.component_group_primaries = None
 
         # Directory for data set.
-        self.__dataset_dir = ""
+        self.dataset_dir = ""
 
         # Name of the data set file (XML file).
-        self.__dataset_filename = ""
+        self.dataset_filename = ""
 
-        self.__type = -1
+        self.type = -1
 
         # print("component_types: " + str(component_types))
         # print("component_names: " + str(component_names))
@@ -92,7 +93,7 @@ class DataSet(object):
         Construct a blank data set. It is expected that other information will be set during
         further processing. Component groups are not initialized until a data set type is set.
         """
-        self.__components = []
+        self.components = []
 
     def DataSet_init2(self, component_types, component_names, component_groups, component_group_assignments,
                       component_group_primaries):
@@ -115,12 +116,12 @@ class DataSet(object):
         and the primary component will be used to supply a list of objects/identifiers
         to create the list of objects identifiers in the group.
         """
-        self.__components = []
-        self._component_types = component_types
-        self._component_names = component_names
-        self._component_groups = component_groups
-        self._component_group_assignments = component_group_assignments
-        self._component_group_primaries = component_group_primaries
+        self.components = []
+        self.component_types = component_types
+        self.component_names = component_names
+        self.component_groups = component_groups
+        self.component_group_assignments = component_group_assignments
+        self.component_group_primaries = component_group_primaries
 
     def DataSet_init3(self, type, dataset_dir, basename):
         """
@@ -131,19 +132,19 @@ class DataSet(object):
         :param dataset_dir: Data set directory.
         :param basename: Basename for files (no directory).
         """
-        self.__components = []
-        self.__type = type
-        self.__dataset_dir = dataset_dir
-        self.__basename = basename
+        self.components = []
+        self.type = type
+        self.dataset_dir = dataset_dir
+        self.basename = basename
 
-    def addComponent(self, comp):
+    def add_component(self, comp):
         """
         Add a component to the data set.
         :param comp: Component to add.
         """
-        self.__components.append(comp)
+        self.components.append(comp)
 
-    def getComponentForComponentType(self, type):
+    def get_component_for_component_type(self, type):
         """
         Return the component for the requested data component type.
         :param type: Component type
@@ -152,27 +153,27 @@ class DataSet(object):
         """
         # logger = logging.getLogger("StateMod")
         # logging.info("looking up component " + type)
-        for component in self.__components:
-            # logging.info("Checking " + comp.getComponentType())
-            if component.getComponentType() == type:
+        for component in self.components:
+            # logging.info("Checking " + comp.get_component_type())
+            if component.get_component_type() == type:
                 return component
             # If the component is a group and did not match the type, check
             # the sub-types in the component...
-            if component.isGroup():
-                v = component.getData()
+            if component.is_group():
+                v = component.get_data()
                 if v is not None:
                     for component in v:
-                        if component.getComponentType() == type:
+                        if component.get_component_type() == type:
                             return component
         return None
 
-    def getDataSetDirectory(self):
+    def get_dataset_directory(self):
         """
         :return: the directory for the data set
         """
-        return self.__dataset_dir
+        return self.dataset_dir
 
-    def lookupComponentName(self, component_type):
+    def lookup_component_name(self, component_type):
         """
         Return the component name given its number
         :param component_type:
@@ -181,25 +182,25 @@ class DataSet(object):
         """
         # The component types are not necessarily numbers that match array indices so that
         # match the type values
-        for i, component_type_search in enumerate(self._component_types):
+        for i, component_type_search in enumerate(self.component_types):
             if component_type == component_type_search:
-                return self._component_names[i]
+                return self.component_names[i]
 
-    def setDataSetDirectory(self, dir):
+    def set_dataset_directory(self, dir):
         """
         Set the directory for the data set.
         :param dir: Directory for the data set.
         """
-        self.__dataset_dir = dir
+        self.dataset_dir = dir
 
-    def setDataSetFilename(self, filename):
+    def set_dataset_filename(self, filename):
         """
         SEt the file name (no directory) for the data set (XML file).
         :param filename: Directory for the data set.
         """
-        self.__dataset_filename = filename
+        self.dataset_filename = filename
 
-    def setDataSetType(self, type, initialize_components):
+    def set_dataset_type(self, type, initialize_components):
         """
         Set the data set type.
         :param type: Data set type.
@@ -207,11 +208,11 @@ class DataSet(object):
         component groups for the type are initialized by calling the
         initializeDataSet() method, which should be defined in the extended class.
         """
-        self.__type = type
+        self.type = type
         if initialize_components:
-            self.__components.clear()
+            self.components.clear()
 
-    def setDirty(self, component_type, is_dirty):
-        comp = self.getComponentForComponentType(component_type)
+    def set_dirty(self, component_type, is_dirty):
+        comp = self.get_component_for_component_type(component_type)
         if comp is not None:
-            comp.setDirty(is_dirty)
+            comp.set_dirty(is_dirty)

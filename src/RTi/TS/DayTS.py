@@ -25,104 +25,34 @@
 # DayTS - base class from which all daily time series are derived
 # ----------------------------------------------------------------------------
 # Notes:	(1)	This base class is provided so that specific daily
-#			time series can derive from this class.
-#		(2)	Data for this time series interval is stored as follows:
+#           time series can derive from this class.
+#           (2)	Data for this time series interval is stored as follows:
 #
-#			day within month  ->
+#           day within month  ->
 #
-#			------------------------
-#              	|  |  |.......|  |  |  |     first month in period
-#			------------------------
-#			|  |  |.......|  |  |
-#			------------------------
-#			|  |  |.......|  |  |  |
-#			------------------------
-#			|  |  |.......|  |  |
-#			---------------------
-#			.
-#			.
-#			.
-#			------------------------
-#			|  |  |.......|  |  |  |
-#			------------------------
-#			|  |  |.......|  |  |        last month in period
-#			---------------------
+#           ------------------------
+#           |  |  |.......|  |  |  |     first month in period
+#           ------------------------
+#           |  |  |.......|  |  |
+#           ------------------------
+#           |  |  |.......|  |  |  |
+#           ------------------------
+#           |  |  |.......|  |  |
+#           ---------------------
+#           .
+#           .
+#           .
+#           ------------------------
+#           |  |  |.......|  |  |  |
+#           ------------------------
+#           |  |  |.......|  |  |        last month in period
+#           ---------------------
 #
-#			The base block of storage is the month.  This lends
-#			itself to very fast data retrieval but may waste some
-#			memory for short time series in which full months are
-#			not stored.  This is considered a reasonable tradeoff.
+#           The base block of storage is the month.  This lends
+#           itself to very fast data retrieval but may waste some
+#           memory for short time series in which full months are
+#           not stored.  This is considered a reasonable tradeoff.
 # ----------------------------------------------------------------------------
-# History:
-#
-# 09 Apr 1998	Steven A. Malers, RTi	Copy the HourTS code and modify as
-#					necessary.  Start to use this instead
-#					of a 24-hour time series to make
-#					storage more straightforward.
-# 22 Aug 1998	SAM, RTi		In-line up getDataPosition in this
-#					class to increase performance. Change
-#					so that getDataPosition returns an
-#					array.
-# 09 Jan 1999	SAM, RTi		Add more exception handling due to
-#					changes in other classes.
-# 05 Apr 1999	CEN, RTi		Optimize by adding _row, _column,
-#					similar to HourTS.
-# 21 Apr 1999	SAM, RTi		Add precision lookup for formatOutput.
-#					Add genesis to output.
-# 09 Aug 1999	SAM, RTi		Add changePeriodOfRecord to support
-#					regression.
-# 21 Feb 2001	SAM, RTi		Add clone().  Add copy constructor.
-#					Remove printSample(), read and write
-#					methods.
-# 04 May 2001	SAM, RTi		Add OutputPrecision property, which is
-#					more consistent with TS notation.
-# 29 Aug 2001	SAM, RTi		Fix clone() to work correctly.  Remove
-#					old C-style documentation.  Change _pos
-#					from static - trying to minimize the
-#					amount of static data that is used.
-# 2001-11-06	SAM, RTi		Review javadoc.  Verify that variables
-#					are set to null when no longer used.
-#					Remove constructor that takes a file
-#					name.  Change some methods to have void
-#					return type to agree with base class.
-# 2002-01-31	SAM, RTi		Add support for data flags.  Change so
-#					getDataPoint() returns a reference to an
-#					internal object that is reused.
-# 2002-05-24	SAM, RTi		Add total period statistics for each
-#					month.
-# 2002-09-05	SAM, RTi		Remove hasDataFlags().  Let the base TS
-#					class method suffice.  Change so that
-#					hasDataFlags() does not allocate the
-#					data flags memory but instead do it in
-#					allocateDataSpace().
-# 2003-01-08	SAM, RTi		Add hasData().
-# 2003-05-02	SAM, RTi		Fix bug in getDataPoint() - was not
-#					recalculationg the row/column position
-#					for the data flag.
-# 2003-06-02	SAM, RTi		Upgrade to use generic classes.
-#					* Change TSDate to DateTime.
-#					* Change TSUnits to DataUnits.
-#					* Change TS.INTERVAL* to TimeInterval.
-# 2003-10-21	SAM, RTi		Overload allocateDataSpace(), similar
-#					to MonthTS to take an initial value.
-# 2003-12-09	SAM, RTi		* Handle data flags in clone().
-# 2004-01-26	SAM, RTi		* Add OutputStart and OutputEnd
-#					  properties to formatOutput().
-#					* In formatOutput(), convert the file
-#					  name to a full path.
-# 2004-03-04	J. Thomas Sapienza, RTi	* Class now implements Serializable.
-#					* Class now implements Transferable.
-#					* Class supports being dragged or
-#					  copied to clipboard.
-# 2005-06-02	SAM, RTi		* Add allocateDataFlagSpace(), similar
-#					  to MonthTS.
-#					* Remove warning about reallocating data
-#					  space.
-# 2005-12-07	JTS, RTi		Added copy constructor to create a DayTS
-#					from an HourTS.
-# 2007-05-08	SAM, RTi		Cleanup code based on Eclipse feedback.
-# ----------------------------------------------------------------------------
-# EndHeader
 
 import logging
 
@@ -144,40 +74,33 @@ class DayTS(TS):
     def __init__(self):
         # Data members...
 
-        self._data = [[]]  # This is the data space for daily time series.
-        self._dataFlags = []  # Data flags
-        self._pos = []  # Used to optimize performance when getting data.
-        self._row = int()  # Row position in data.
-        self._column = int()  # column position in data
+        self.data = [[]]  # This is the data space for daily time series.
+        self.data_flags = []  # Data flags
+        self.pos = []  # Used to optimize performance when getting data.
+        self.row = int()  # Row position in data.
+        self.column = int()  # column position in data
 
         super().__init__()
-        self.initialize_DayTS()
+        self.initialize_dayts()
 
-    def allocateDataSpace(self):
-        """
-        Allocate the data space for the time series.  The start and end dates and the
-        data interval multiplier must have been set.  Initialize the space with the missing data value.
-        """
-        self.allocateDataSpaceFromNum(self._missing)
-
-    def allocateDataSpaceFromNum(self, value):
+    def allocate_data_space(self, value=None):
         """
         Allocate the data space.  The start and end dates and the interval multiplier should have been set.
-        :param value: The value to initialize the time series.
+        :param value: The value to initialize the time series, if None use the time series missing value.
         :return: 0 if successful, 1 if failure.
         """
-        logger = logging.getLogger("StateMod")
-        routine = "DayTS.allocateDataSpace"
-        ndays_in_month = int()
+        logger = logging.getLogger(__name__)
         nmonths = 0
-        nvals = int()
 
-        if (self._date1 == None) or (self._date2 == None):
+        if not value:
+            value = self.missing
+
+        if not self.date1 or not self.date2:
             logger.warning("No dates set for memory allocation.")
             return 1
-        if self._data_interval_mult != 1:
+        if self.data_interval_mult != 1:
             # Do not know how to handle N-day interval...
-            message = "Only know how to handle 1-day data, not " + str(self._data_interval_mult) + "Day"
+            message = "Only know how to handle 1-day data, not " + str(self.data_interval_mult) + "Day"
             logger.warning(message)
             return 1
 
@@ -185,9 +108,9 @@ class DayTS(TS):
             logger.warning("TS has 0 months POR, maybe dates haven't been set yet")
             return 1
 
-        self._data = [[float()]]*nmonths
-        if self._has_data_flags:
-            self._dataFlags = [[str()]]*nmonths
+        self.data = [[float()]]*nmonths
+        if self.has_data_flags:
+            self.data_flags = [[str()]]*nmonths
 
         # May need to catch an exception here in case we run out of memory.
 
@@ -195,35 +118,32 @@ class DayTS(TS):
         # to determine the number of days in each month.
 
         date = DateTime(DateTime.DATE_FAST)
-        date.setMonth(self._date1.getMonth())
-        date.setYear(self._date1.getYear())
+        date.set_month(self.date1.get_month())
+        date.set_year(self.date1.get_year())
 
-        iday = 0
         for imon in range(nmonths):
-            ndays_in_month = TimeUtil.numDaysInMonthFromDateTime(date)
+            ndays_in_month = TimeUtil.num_days_in_month_from_datetime(date)
             # Handle 1-day data, otherwise an excpetion was thrown above.
             # Here would change the number of values if N-day was supported.
             nvals = ndays_in_month
-            self._data[imon] = [float()]*nvals
+            self.data[imon] = [float()]*nvals
 
             # Now fill with the missing data value for each day in month...
 
             for iday in range(nvals):
-                self._data[imon][iday] = value
-                if self._has_data_flags:
-                    self._dataFlags[imon][iday] = ""
+                self.data[imon][iday] = value
+                if self.has_data_flags:
+                    self.data_flags[imon][iday] = ""
 
-            date.addMonth(1)
+            date.add_month(1)
 
-        nactual = DayTS.calculateDataSize(self._date1, self._date2, self._data_interval_mult)
-        self.setDataSize(nactual)
+        nactual = DayTS.calculate_data_size(self.date1, self.date2, self.data_interval_mult)
+        self.set_data_size(nactual)
 
-        date = None
-        routine = None
         return 0
 
     @staticmethod
-    def calculateDataSize(start_date, end_date, interval_mult):
+    def calculate_data_size(start_date, end_date, interval_mult):
         """
         Determine the number of points between two dates for the given interval multiplier.
         :param start_date: The first date of the period.
@@ -232,14 +152,12 @@ class DayTS(TS):
         :return: The number of data points for a day time series
         given the data interval multiplier for the specified period.
         """
-        logger = logging.getLogger("StateMod")
-        routine = "DayTS.calculateDataSize"
-        datasize = 0
+        logger = logging.getLogger(__name__)
 
-        if start_date == None:
+        if not start_date:
             logger.warning("Start date is null")
             return 0
-        if end_date == None:
+        if not end_date:
             logger.warning("End date is null")
             return 0
         if interval_mult > 1:
@@ -247,34 +165,33 @@ class DayTS(TS):
             return 0
 
         # First set to the number of data in the months...
-        datasize = TimeUtil.numDaysInMonths(start_date.getMonth(), start_date.getYear(), end_date.getMonth(), end_date.getYear())
+        datasize = TimeUtil.num_days_in_months(start_date.get_month(), start_date.get_year(), end_date.get_month(),
+                                               end_date.get_year())
         # Now subtract off the data at the ends that are missing...
         # Start by subtracting the full day at the beginning of the month is not included...
-        datasize -= (start_date.getDay() - 1)
+        datasize -= (start_date.get_day() - 1)
         # Now subtract off the data at the end...
         # Start by subtracting the full days off the end of the month...
-        ndays_in_month = TimeUtil.numDaysInMonth(end_date.getMonth(), end_date.getYear())
-        datasize -= (ndays_in_month - end_date.getDay())
-        routine = None
+        ndays_in_month = TimeUtil.num_days_in_month(end_date.get_month(), end_date.get_year())
+        datasize -= (ndays_in_month - end_date.get_day())
         return datasize
 
-
-    def initialize_DayTS(self):
+    def initialize_dayts(self):
         """
         Initialize data members
         """
-        self._data = None
-        self._data_interval_base = TimeInterval.DAY
-        self._data_interval_mult = 1
-        self._data_interval_base_original = TimeInterval.DAY
-        self._data_interval_mult_original = 1
-        self._pos = [int()] * 2
-        self._pos[0] = 0
-        self._pos[1] = 0
-        self._row = 0
-        self._column = 0
+        self.data = None
+        self.data_interval_base = TimeInterval.DAY
+        self.data_interval_mult = 1
+        self.data_interval_base_original = TimeInterval.DAY
+        self.data_interval_mult_original = 1
+        self.pos = [int()] * 2
+        self.pos[0] = 0
+        self.pos[1] = 0
+        self.row = 0
+        self.column = 0
 
-    def getDataPosition(self, date):
+    def get_data_position(self, date):
         """
         :param date: Date of interest
         :return: The data position corresponding to the date.
@@ -289,26 +206,26 @@ class DayTS(TS):
 
         # Calculate the row position of the data...
 
-        self._row = date.getAbsoluteMonth() - self._date1.getAbsoluteMonth()
+        self.row = date.get_absolute_month() - self.date1.get_absolute_month()
 
         # Calculate the column position of the data. We know that daily data
         # is stored in a 2 deminsional array with the column being the daily data by interval.
 
-        self._column = date.getDay() - 1
+        self.column = date.get_day() - 1
 
-        self._pos[0] = self._row
-        self._pos[1] = self._column
-        return self._pos
+        self.pos[0] = self.row
+        self.pos[1] = self.column
+        return self.pos
 
-    def setDataValue(self, date, value):
+    def set_data_value(self, date, value):
         """
         Set the data value for the date.
         :param date: Date of interest
         :param value: Data value corresponding to date.
         """
-        if date.lessThan(self._date1) or date.greaterThan(self._date2):
+        if date.less_than(self.date1) or date.greater_than(self.date2):
             return
-        self.getDataPosition(date)
+        self.get_data_position(date)
         # Set the dirty flag so that we know to recompute the limits if desired...
-        self._dirty = True
-        self._data[self._row][self._column] = value
+        self.dirty = True
+        self.data[self.row][self.column] = value

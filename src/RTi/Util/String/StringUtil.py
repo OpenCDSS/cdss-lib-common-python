@@ -3,6 +3,7 @@
 import logging
 import time
 
+
 class StringUtil:
 
     # Indicates that strings should be sorted in ascending order.
@@ -47,9 +48,7 @@ class StringUtil:
     PAD_FRONT_MIDDLE_BACK  = PAD_FRONT != PAD_MIDDLE != PAD_BACK
 
     # ------------------------------------------------------------------------------
-    #  HMBreakStringList - get a list of strings from a string
-    # ------------------------------------------------------------------------------
-    #  Copyright:	See the COPYRIGHT file.
+    #  beak_string_list - get a list of strings from a string
     # ------------------------------------------------------------------------------
     #  Notes:	(1)	The list is assumed to be of the form "val,val,val",
     # 			where the commas indicate the delimiter character.
@@ -65,29 +64,6 @@ class StringUtil:
     # 		(5)	It would be nice to allow return of all the tokens.
     # 			Add the "flag" variable to allow for this enhancement
     # 			in the future.
-    # ------------------------------------------------------------------------------
-    #  History:
-    #
-    # ?		Steven A. Malers, RTi	Created routine.
-    # 06-08-95	SAM, RTi		Document all variables.
-    # 08-21-95	SAM, RTi		Change so that delimiter list is a
-    # 				string so that more than one
-    # 				"whitespace" character can be used
-    # 				(e.g., spaces and tabs).  Also allow
-    # 				more than one whitespace character in
-    # 				sequence (skip them all).  Also add
-    # 				check to make sure that substring is not
-    # 				overrun.
-    # 04 Oct 1995	SAM, RTi		Use HMAddToStringList to do bulk of
-    # 				work.
-    # 02 Sep 1996	SAM, RTi		Break this routine out of HMUtil.c.  Do
-    # 				minor cleanup to make more stand-alone.
-    # 07 Oct 1996	SAM, RTi		Add <string.h> to prototype functions.
-    # 21 Jan 1997	SAM, RTi		Add flag to allow quoted strings to be
-    # 				separated out.
-    # 17 Jun 1997	Matthew J. Rutherford, RTi
-    # 				Adjust string stuff so that a quote
-    # 				in the middle of a string is found.
     # ------------------------------------------------------------------------------
     # Variable	I/O	Description
     #
@@ -106,7 +82,7 @@ class StringUtil:
     # tempstr	L	String used when splitting out sub-strings.
     # ------------------------------------------------------------------------------
     @staticmethod
-    def breakStringList(string, delim, flag):
+    def break_string_list(string, delim, flag):
         """
         Break a delimited string into a list of Strings.  The end of the string is
         considered as a delimiter so "xxxx,xxxx" returns two strings if the comma is a
@@ -274,7 +250,7 @@ class StringUtil:
         return list
 
     @staticmethod
-    def fixedRead1(string, format):
+    def fixed_read(string, format):
         """
         Parse a fixed-format string (e.g., a FORTRAN data file) using a simplified
         notation.  <b>This routine needs to be updated to accept C-style formatting
@@ -398,12 +374,13 @@ class StringUtil:
         width_string = None
         # ... END OF INLINED CODE
         # Now do the read...
-        v = StringUtil.fixedRead2(string, field_types, field_widths, None)
+        v = StringUtil.fixed_read2(string, field_types, field_widths, None)
         return v
 
 
+    # TODO smalers 2019-12-31 need to rework to provide overloaded behavior similar to Java
     @staticmethod
-    def fixedRead2(string, field_types, field_widths, results):
+    def fixed_read2(string, field_types, field_widths, results):
         dtype = 0  # Indicates type of variable (from "format").
         isize = 0  # Number of characters in a data value (as integer).
         j = 0  # Index for characters in a field.
@@ -477,7 +454,7 @@ class StringUtil:
         return tokens
 
     @staticmethod
-    def readToDelim(string0, delim):
+    def read_to_delim(string0, delim):
         """
         String up to but not including the delimiter character.
         :param string0: String to read from.

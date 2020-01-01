@@ -2,22 +2,22 @@
 
 # NoticeStart
 #
-# CDSS Common Java Library
-# CDSS Common Java Library is a part of Colorado's Decision Support Systems (CDSS)
+# CDSS Common Python Library
+# CDSS Common Python Library is a part of Colorado's Decision Support Systems (CDSS)
 # Copyright (C) 1994-2019 Colorado Department of Natural Resources
 #
-# CDSS Common Java Library is free software:  you can redistribute it and/or modify
+# CDSS Common Python Library is free software:  you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
 #     the Free Software Foundation, either version 3 of the License, or
 #     (at your option) any later version.
 #
-#     CDSS Common Java Library is distributed in the hope that it will be useful,
+#     CDSS Common Python Library is distributed in the hope that it will be useful,
 #     but WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #     GNU General Public License for more details.
 #
 #     You should have received a copy of the GNU General Public License
-#     along with CDSS Common Java Library.  If not, see <https://www.gnu.org/licenses/>.
+#     along with CDSS Common Python Library.  If not, see <https://www.gnu.org/licenses/>.
 #
 # NoticeEnd
 
@@ -38,16 +38,16 @@ class StopWatch(object):
     def __init__(self, total = None):
 
         # Total elapsed running time in milliseconds
-        self._total_milliseconds = float()
+        self.total_milliseconds = float()
 
         # Start date for a StopWatch session.
-        self._start_date = None
+        self.start_date = None
 
         # Indicates if the start time has been set
-        self._start_set = bool()
+        self.start_set = bool()
 
         # Stop date for a StopWatch session.
-        self._stop_date = None
+        self.stop_date = None
 
         if total is not None:
             self.initialize(total)
@@ -59,19 +59,19 @@ class StopWatch(object):
         Add the time from another stopwatch to the elapsed time for this stopwatch
         :param sw: the StopWatch from which to get additional time.
         """
-        self._total_milliseconds += sw.getMilliseconds()
+        self.total_milliseconds += sw.get_milliseconds()
 
     def clear(self):
         """
         Reset the StopWatch to zero.
         """
-        self._total_milliseconds = 0
+        self.total_milliseconds = 0
 
-    def clearAndStart(self):
+    def clear_and_start(self):
         """
         Reset the StopWatch to zero and call start()
         """
-        self._total_milliseconds = 0
+        self.total_milliseconds = 0
         self.start()
 
     def finalize(self):
@@ -79,55 +79,55 @@ class StopWatch(object):
         Finalize before garbage collection.
         :return:
         """
-        self._start_date = None
-        self._stop_date = None
+        self.start_date = None
+        self.stop_date = None
 
-    def getMilliseconds(self):
+    def get_milliseconds(self):
         """
         Return the accumulated milliseconds.
         :return: The number of milliseconds accumulated in the StopWatch
         """
-        return self._total_milliseconds
+        return self.total_milliseconds
 
-    def getSeconds(self):
+    def get_seconds(self):
         """
         Return the accumulated seconds.
         :return: The number of seconds accumulated in the StopWatch (as a double so that
         milliseconds are also reflected).
         """
-        return self._total_milliseconds/1000.0
+        return self.total_milliseconds/1000.0
 
     def initialize(self, total):
         """
         Initialize Stopwatch.
         :param total:  initial StopWatch value in milliseconds
         """
-        self._total_milliseconds = total
-        self._start_date = None
-        self._start_set = False
-        self._stop_date = None
+        self.total_milliseconds = total
+        self.start_date = None
+        self.start_set = False
+        self.stop_date = None
 
     def start(self):
         """
         Start accumulation time in the StopWatch.
         """
-        self._start_set = True
-        self._start_date = time.time()
+        self.start_set = True
+        self.start_date = time.time()
 
     def stop(self):
         """
         Stop accumulating time in the StopWatch.  This does not clear the StopWatch and
         subsequent calls to "start" can be made to continue adding to the StopWatch.
         """
-        self._stop_date = time.time()
+        self.stop_date = time.time()
         # Compute the difference anc add to the elapsed time.
-        if self._start_set:
-            add = int(round(self._stop_date * 1000)) - int(round(self._start_date * 1000))
-            self._total_milliseconds += add
-        self._start_set = False
+        if self.start_set:
+            add = int(round(self.stop_date * 1000)) - int(round(self.start_date * 1000))
+            self.total_milliseconds += add
+        self.start_set = False
 
     def __str__(self):
         """
         Print the StopWatch value as seconds
         """
-        return str("StopWatch(seconds)=" + str(self.getSeconds()))
+        return str("StopWatch(seconds)=" + str(self.get_seconds()))
