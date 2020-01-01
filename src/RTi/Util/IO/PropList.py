@@ -2,125 +2,24 @@
 
 # NoticeStart
 #
-# CDSS Common Java Library
-# CDSS Common Java Library is a part of Colorado's Decision Support Systems (CDSS)
+# CDSS Common Python Library
+# CDSS Common Python Library is a part of Colorado's Decision Support Systems (CDSS)
 # Copyright (C) 1994-2019 Colorado Department of Natural Resources
 #
-# CDSS Common Java Library is free software:  you can redistribute it and/or modify
+# CDSS Common Python Library is free software:  you can redistribute it and/or modify
 #     it under the terms of the GNU General Public License as published by
 #     the Free Software Foundation, either version 3 of the License, or
 #     (at your option) any later version.
 #
-#     CDSS Common Java Library is distributed in the hope that it will be useful,
+#     CDSS Common Python Library is distributed in the hope that it will be useful,
 #     but WITHOUT ANY WARRANTY; without even the implied warranty of
 #     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #     GNU General Public License for more details.
 #
 #     You should have received a copy of the GNU General Public License
-#     along with CDSS Common Java Library.  If not, see <https://www.gnu.org/licenses/>.
+#     along with CDSS Common Python Library.  If not, see <https://www.gnu.org/licenses/>.
 #
 # NoticeEnd
-
-#  ----------------------------------------------------------------------------
-#  PropList - use to hold a list of properties
-#  ----------------------------------------------------------------------------
-#  Copyright:  See the COPYRIGHT file.
-#  ----------------------------------------------------------------------------
-#  History:
-#
-#  Sep 1997?	Steven A. Malers,	Initial version.
-# 		Riverside Technology,
-# 		inc.
-#  02 Feb 1998	SAM, RTi		Get all of the Prop* classes working
-# 					together.
-#  24 Feb 1998	SAM, RTi		Add the javadoc comments.
-#  02 May 1998	SAM, RTi		Add the getValid function.
-#  13 Apr 1999	SAM, RTi		Add finalize.
-#  17 May 1999	SAM, RTi		Add setUsingObject to avoid overload
-# 					conflict.
-#  06 Nov 2000	CEN, RTi		Added read/writePersistent
-#   					implementation similar to C++ implem.
-# 					Included adding clear
-#  14 Jan 2001	SAM, RTi		Overload set to take a Prop.
-#  13 Feb 2001	SAM, RTi		Change readPersistent() and associated
-# 					methods return void as per C++.  Fix
-# 					bug where readPersistent() was not
-# 					handling whitespace correctly.  Add
-# 					javadoc to readPersistent().  Add
-# 					getValue(key,inst), getProp(key,inst),
-# 					findProp(key,inst) to store multiple
-# 					instances of properties with the same
-# 					key.
-#  27 Apr 2001	SAM, RTi		Change all debug levels to 100.
-#  10 May 2001	SAM, RTi		Testing to get working with embedded
-# 					variables like ${...}.  This involves
-# 					passing the persistent format to the
-# 					Prop.getValue() method so that it can
-# 					decide whether to expand the contents.
-# 					Move routine names into messages
-# 					themselves to limit overhead.  Set
-# 					unused variables to null to optimize
-# 					memory management.  Change initial
-# 					list size from 100 to 20.
-#  14 May 2001	SAM, RTi		Change so that when parsing properties
-# 					the = is the only delimiter so that
-# 					quotes around arguments with spaces
-# 					are not needed.
-#  2001-11-08	SAM, RTi		Synchronize with UNIX.  Changes from
-# 					2001-05-14... Add a boolean flag
-# 					_literal_quotes to keep the quotes in
-# 					the PropList.  This is useful where
-# 					commands are saved in PropLists.
-# 					Change so when reading a persistent
-# 					file, the file can be a regular file or
-# 					a URL.
-#  2002-01-20	SAM, RTi		Fix one case where equals() was being
-# 					used instead of equalsIgnoreCase() when
-# 					finding property names.
-#  2002-02-03	SAM, RTi		Add setHowSet() and getHowSet() to track
-# 					how a property is set.  Remove the
-# 					*_CONFIG static parameters because
-# 					similar values are found in Prop.  The
-# 					values were never used.  Change set
-# 					methods to be void instead of having a
-# 					return type.  The return value is never
-# 					used.  Fix bug where setValue() was
-# 					replacing the Prop in the PropList with
-# 					the given object (rather than the value
-# 					in the Prop) - not sure if this code
-# 					was ever getting called!  Change
-# 					readPersistent() and writePersistent()
-# 					to throw an IOException if there is an
-# 					error.  Add getPropsMatchingRegExp(),
-# 					which is used by TSProduct to help write
-# 					properties.
-#  2002-07-01	SAM, RTi		Add elementAt() to get a property at
-# 					a position.
-#  2002-12-24	SAM, RTi		Support /* */ comments in Java PropList.
-#  2003-03-27	SAM, RTi		Fix bugs in setContents() and setValue()
-# 					methods where when a match was found
-# 					the code did not return, resulting in
-# 					a new duplicate property also being
-# 					appended.
-#  2003-10-27	J. Thomas Sapienza, RTi	Added a very basic copy constructor.
-# 					In the future should implement
-# 					clone() and a copy constructor that
-# 					can handle Props that have data objects.
-#  2003-11-11	JTS, RTi		* Added getPropCount().
-# 					* Added the methods with the replace
-# 					  parameter.
-# 					* Added unSetAll().
-#  2004-02-03	SAM, RTi		* Add parse().
-#  2004-07-15	JTS, RTi		Added sortList().
-#  2004-11-29	JTS, RTi		Added getList().
-#  2005-04-29	SAM, RTi		* Overload the parse method to take a
-# 					  "how set" value.
-#  2005-06-09	JTS, RTi		Warnings in readPersistent() are now
-# 					printed at level 2.
-#  2005-12-06	JTS, RTi		Added validatePropNames().
-#  2007-03-02	SAM, RTi		Update setUsingObject() to allow null.
-#  ----------------------------------------------------------------------------
-#  EndHeader
 
 import logging
 
@@ -144,7 +43,7 @@ class PropList(object):
     property has a String key, a String value, an Object contents, and an integer
     flag indicating how the property was set (from file, by user, etc).  For simple
     strings, the value and contents are the same.  For other Objects, the contents
-    evaluates to toString(); however, applications will often use the contents
+    evaluates to to_string(); however, applications will often use the contents
     directly by casting after retrieving from the PropList.
     <p>
 
@@ -180,9 +79,9 @@ class PropList(object):
     written.  For example:
     <pre>
     PropList props = new PropList ( "" );
-    props.setPersistentName ( "somefile" );
+    props.set_persistent_name ( "somefile" );
     // The following uses a "how set" value of Prop.SET_FROM_PERSISTENT.
-    props.readPersistent ( "somefile" );
+    props.read_persistent ( "somefile" );
     // Next, the application may check the file properties and assign some internal
     // defaults to have a full set of properties...
     props.setHowSet ( Prop.SET_AS_RUNTIME_DEFAULT );
@@ -216,131 +115,131 @@ class PropList(object):
     # Indicates that configuration information is being stored in standard RTi properties file.
     FORMAT_PROPERTIES = 4
 
-    def __init__(self, listName=None, persistentName=None, persistentFormat=None):
+    def __init__(self, list_name=None, persistent_name=None, persistent_format=None):
         # Name of this PropList.
-        self.__listName = ""
+        self.list_name = ""
 
         # List of Prop.
-        self.__list = []
+        self.list = []
 
         # File to save in.
-        self.__persistentName = ""
+        self.persistent_name = ""
 
         # Format of file to read
-        self.__persistentFormat = int()
+        self.persistent_format = int()
 
         # Last line read from the property file.
-        self.__lastLineNumberRead = int()
+        self.last_line_number_read = int()
 
         # Indicates if quotes should be treated literally when setting Prop values.
-        self.__literalQuotes = True
+        self.literal_quotes = True
 
         # The "how set" value to use when properties are being set
-        self.__howSet = Prop.SET_UNKNOWN
+        self.how_set = Prop.SET_UNKNOWN
 
-        if listName is not None:
-            if persistentFormat is not None:
-                if persistentName is not None:
+        if list_name is not None:
+            if persistent_format is not None:
+                if persistent_name is not None:
                     # Construct using a list name, a configuration file name,
-                    # and a configuration file format type.  The file is not actually read (call readPersistent()
+                    # and a configuration file format type.  The file is not actually read (call read_persistent()
                     # to do so).
-                    # PropList(listName, persistentName, persistentFormat)
-                    self.initialize(listName, persistentName, persistentFormat)
+                    # PropList(list_name, persistent_name, persistent_format)
+                    self.initialize(list_name, persistent_name, persistent_format)
                 else:
                     # Construct using a list name, a configuration file name,
-                    # and a configuration file format type.  The file is not actually read (call readPersistent()
+                    # and a configuration file format type.  The file is not actually read (call read_persistent()
                     # to do so).
-                    # PropList(listName, persistentFormat)
-                    self.initialize(listName, "", persistentFormat)
+                    # PropList(list_name, persistent_format)
+                    self.initialize(list_name, "", persistent_format)
             else:
                 # Construct given the name of the list (the list name should be unique if
                 # multiple lists are being used in a PropListManager.  The persistent format defaults to
                 # FORMAT_UNKNOWN.
-                # PropList(listName)
-                self.initialize(listName, "", PropList.FORMAT_UNKNOWN)
+                # PropList(list_name)
+                self.initialize(list_name, "", PropList.FORMAT_UNKNOWN)
 
-    def append(self, key, contents, isLiteral):
+    def append(self, key, contents, is_literal):
         """
         Append a property to the list using a string key.
         :param key: String key for the property
         :param contents: Contents for the property
-        :param isLiteral:
+        :param is_literal:
         """
-        prop = Prop(self.__howSet, None, key, contents, str(contents))
-        prop.setIsLiteral(isLiteral)
-        self.__list.append(prop)
+        prop = Prop(self.how_set, None, key, contents, str(contents))
+        prop.set_is_literal(is_literal)
+        self.list.append(prop)
 
     def clear(self):
         """
         Remove all items from the PropList
         """
-        self.__list.clear()
+        self.list.clear()
 
-    def elementAt(self, pos):
+    def element_at(self, pos):
         """
         Return the Prop instance at the requested position.  Use size() to determine the size of the PropList.
         :param pos: the position of the property to return (0+).
         :return: the Prop at the specified position.
         """
-        return self.__list[pos]
+        return self.list[pos]
 
-    def findProp(self, key):
+    def find_prop(self, key):
         """
         Find a property in the list.
         :param key: The string key used to look up the property.
         """
-        for i, prop_i in enumerate(self.__list):
-            propKey = prop_i.getKey()
-            if key.upper() == propKey.upper():
+        for i, prop_i in enumerate(self.list):
+            prop_key = prop_i.get_key()
+            if key.upper() == prop_key.upper():
                 # Have a match. Return the position...
                 return i
         return -1
 
-    def getList(self):
+    def get_list(self):
         """
         Returns the list of Props.
         :return: the list of props.
         """
-        return self.__list
+        return self.list
 
-    def getPersistentFormat(self):
+    def get_persistent_name(self):
         """
         Return the format of the property list file.
         :return: The format of the property list file.
         """
-        return self.__persistentFormat
+        return self.persistent_format
 
-    def getValue(self, key):
+    def get_value(self, key):
         """
         The string value of the property corresponding to the string key, or null if not found.
         :param key: The string key used to look up the property
         """
-        pos = self.findProp(key)
+        pos = self.find_prop(key)
         if pos >= 0:
             # We have a match. Get the value...
-            return self.__list[pos].getValue(self)
+            return self.list[pos].get_value(self)
         return None
 
-    def initialize(self, listName, persistentName, persistentFormat):
+    def initialize(self, list_name, persistent_name, persistent_format):
         """
         Initialize the object.
-        :param listName: Name for the PropList.
-        :param persistentName: Persistent name for the PropList (used only when reading from a file).
-        :param persistentFormat: Format for properties file.
+        :param list_name: Name for the PropList.
+        :param persistent_name: Persistent name for the PropList (used only when reading from a file).
+        :param persistent_format: Format for properties file.
         """
-        if listName is None:
-            self.__listName = ""
+        if list_name is None:
+            self.list_name = ""
         else:
-            self.__listName = listName
-        if persistentName is None:
-            self.__persistentName = ""
+            self.list_name = list_name
+        if persistent_name is None:
+            self.persistent_name = ""
         else:
-            self.__persistentName = persistentName
-        self.__persistentFormat = persistentFormat
-        self.__list = []
-        self.__lastLineNumberRead = 0
+            self.persistent_name = persistent_name
+        self.persistent_format = persistent_format
+        self.list = []
+        self.last_line_number_read = 0
 
-    def readPersistent(self, append=None, includeLiterals=None):
+    def read_persistent(self, append=None, include_literals=None):
         """
         /**
         Read a property list from a persistent source.  The "how_set" flag for each
@@ -383,57 +282,55 @@ class PropList(object):
         # Duplicate variables will be read in.  However, to lookup, use getPropValue()
         </pre>
         :param append: Append to current property list (true) or clear out current list (false).
-        :param includeLiterals: if true, comments and other non-property lines will be included as literals
+        :param include_literals: if true, comments and other non-property lines will be included as literals
         in the property list using key "Literal1", "Literal2", etc.  This is useful if reading a property file,
         updating its values, and then writing out again, trying to retain the original comments.
         """
-        logger = logging.getLogger("StateMod")
+        logger = logging.getLogger(__name__)
 
         if append is None:
             append = True
         else:
             append = True
-            includeLiterals = False
-
-        routine = "PropList.readPersistent"
+            include_literals = False
 
         prefix = ""
         continuation = False
-        lineSave = None
-        inComment = False
-        literalCount = 0
+        line_save = None
+        in_comment = False
+        literal_count = 0
 
         if not append:
             self.clear()
 
-        howSetPrev = self.__howSet
-        self.__howSet = Prop.SET_FROM_PERSISTENT
+        how_set_prev = self.how_set
+        self.how_set = Prop.SET_FROM_PERSISTENT
         try:
-            self.__lastLineNumberRead = 0
+            self.last_line_number_read = 0
             length = 0
-            with open(self.__persistentName) as f:
+            with open(self.persistent_name) as f:
                 for line in f:
                     line.strip()
-                    self.__lastLineNumberRead += 1
+                    self.last_line_number_read += 1
                     if continuation:
                         # Take this line and add it to the previous. Add a space to separate tokens.
                         # Should not normally be a comment.
-                        line = str(lineSave) + " " + line
+                        line = str(line_save) + " " + line
                     # Handle line continuation with \ at end...
                     if line.endswith("\\"):
                         continuation = True
                         # Add a space at the end because when continuing lines the next line
                         # likely has separation tokens.
-                        lineSave = line[0:len(line)-1]
+                        line_save = line[0:len(line)-1]
                         continue
                     continuation = False
-                    lineSave = None
+                    line_save = None
                     if len(line) > 0:
                         if line[0] == '#':
                             # Comment line
-                            if includeLiterals:
-                                literalCount += 1
-                                self.append("Literal" + str(literalCount), line, True)
+                            if include_literals:
+                                literal_count += 1
+                                self.append("Literal" + str(literal_count), line, True)
                             continue
                         elif (line.startswith("<#") or line.startswith("</#")):
                             # Freemarker template syntax
@@ -441,32 +338,32 @@ class PropList(object):
                     if line.find('#') != -1:
                         idx = line.index('#')
                         line = line[0:idx]
-                    if inComment and line.startswith("*/"):
-                        inComment = False
+                    if in_comment and line.startswith("*/"):
+                        in_comment = False
                         # For now the end of comment must be at the start of the line so
                         # ignore the rest of the line...
-                        if includeLiterals:
-                            literalCount += 1
-                            self.append("Literal" + str(literalCount), line, True)
+                        if include_literals:
+                            literal_count += 1
+                            self.append("Literal" + str(literal_count), line, True)
                         continue
-                    if ((not inComment) and line.startswith("/*")):
-                        inComment = True
+                    if ((not in_comment) and line.startswith("/*")):
+                        in_comment = True
                         # For now the end of comment must be at the start of the line so ignore the rest of the
                         # line...
-                        if includeLiterals:
-                            literalCount += 1
-                            self.append("Literal" + str(literalCount), line, True)
+                        if include_literals:
+                            literal_count += 1
+                            self.append("Literal" + str(literal_count), line, True)
                         continue
-                    if inComment:
+                    if in_comment:
                         # Did not detect an end to the comment above so skip the line...
-                        if includeLiterals:
-                            literalCount += 1
-                            self.append("Literal" + str(literalCount), line, True)
+                        if include_literals:
+                            literal_count += 1
+                            self.append("Literal" + str(literal_count), line, True)
                         continue
                     if len(line) == 0:
-                        if includeLiterals:
-                            literalCount += 1
-                            self.append("Literal" + str(literalCount), line, True)
+                        if include_literals:
+                            literal_count += 1
+                            self.append("Literal" + str(literal_count), line, True)
                         continue
                     if line[0] == '[':
                         # Block indicator - contents of [] will be prepended to property names
@@ -474,21 +371,21 @@ class PropList(object):
                             # Likely a freemarker template syntax so skip
                             continue
                         if line.index(']') == -1:
-                            logger.warning("Missing ] on line " + str(self.__lastLineNumberRead) + " of " +
-                                           self.__persistentName)
+                            logger.warning("Missing ] on line " + str(self.last_line_number_read) + " of " +
+                                           self.persistent_name)
                             continue
                         prefix = line[1: line.index(']')] + "."
-                        if includeLiterals:
-                            literalCount += 1
-                            self.append("Literal" + str(literalCount), line, True)
+                        if include_literals:
+                            literal_count += 1
+                            self.append("Literal" + str(literal_count), line, True)
                         continue
                     pos = line.index('=')
                     if pos < 0:
-                        logger.warning("Missing equal sign on line " + str(self.__lastLineNumberRead) + " of " +
-                                       self.__persistentName + " (" + line + ")")
-                        if includeLiterals:
-                            literalCount += 1
-                            self.append("Literal" + str(literalCount), line, True)
+                        logger.warning("Missing equal sign on line " + str(self.last_line_number_read) + " of " +
+                                       self.persistent_name + " (" + line + ")")
+                        if include_literals:
+                            literal_count += 1
+                            self.append("Literal" + str(literal_count), line, True)
                         continue
                     v = []
                     v.append(line[0:pos])
@@ -505,14 +402,14 @@ class PropList(object):
                         if len(name) > 0:
                             self.append(name, value, False)
                     else:
-                        logger.warning("Missing or too many equal signs on line " + str(self.__lastLineNumberRead) +
-                                       " of " + self.__persistentName + " (" + line + ")")
+                        logger.warning("Missing or too many equal signs on line " + str(self.last_line_number_read) +
+                                       " of " + self.persistent_name + " (" + line + ")")
         except Exception as e:
-            message = ("Exception caught while reading line " + str(self.__lastLineNumberRead) + " of " +
-                       self.__persistentName + ".")
-            logger.warning(message)
+            message = ("Exception caught while reading line " + str(self.last_line_number_read) + " of " +
+                       self.persistent_name + ".")
+            logger.warning(message,e)
         # Clean up...
-        self.__howSet = howSetPrev
+        self.how_set = how_set_prev
 
     def set(self, prop):
         """
@@ -523,29 +420,29 @@ class PropList(object):
         # Find if this is already a property in this list...
         if prop is None:
             return
-        index = self.findProp(prop.getKey())
+        index = self.find_prop(prop.get_key())
         if (index < 0) or not replace:
             # Not currently in the list so add it...
-            self.append(prop.getKey(), prop.getContents(), prop.getValue(self))
+            self.append(prop.get_key(), prop.get_contents(), prop.get_value(self))
         else:
             # Already in the list so change it...
-            prop.setHowSet(self.__howSet)
-            self.__list[index] = prop
+            prop.setHowSet(self.how_set)
+            self.list[index] = prop
 
-    def setPersistentName(self, persistent_name):
+    def set_persistent_name(self, persistent_name):
         if persistent_name is not None:
-            self.__persistentName = persistent_name
+            self.persistent_name = persistent_name
 
     def __str__(self):
-        return self.toString(",")
+        return self.to_string(",")
 
-    def toString(self, delim):
-        str = ""
-        for i, prop in enumerate(self.__list):
+    def to_string(self, delim):
+        s = ""
+        for i, prop in enumerate(self.list):
             if i > 0:
-                str += delim
+                s += delim
             if prop is None:
-                str += "None"
+                s += "None"
             else:
-                str += (prop.getKey() + "=\"" + prop.getValue() + "\"")
-        return str
+                s += (prop.get_key() + "=\"" + prop.get_value() + "\"")
+        return s

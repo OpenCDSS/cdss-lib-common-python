@@ -12,28 +12,28 @@
 
 class YearType():
 
-    def __init__(self, displayName, startyearOffset, startMonth, endYearOffset, endMonth):
+    def __init__(self, display_name, start_year_offset, start_month, end_year_offset, end_month):
 
         # The name that is used for choices and other technical code (terse).
-        self.__displayName = str()
+        self.display_name = str()
 
         # The calendar year offset in which the year starts.
         # For example, -1 indicates that the year starts in the previous calendar year.
-        self.__startYearOffset = int()
+        self.start_year_offset = int()
 
         # The calendar year offset in which the year ends
         # For example, 0 indicates that the year ends in the previous calendar year.
-        self.__endYearOffset = int()
+        self.end_year_offset = int()
 
         # The calendar month (1-12) when the year starts. For example, 10 indicates that the
         # year starts in October.
-        self.__startMonth = int()
+        self.start_month = int()
 
         # The calendar month (1-12) when the year ends. For example, 9 indicates that the year
         # ends in September.
-        self.__endMonth = int()
+        self.end_month = int()
 
-        self.initialize_YearType(displayName, startyearOffset, startMonth, endYearOffset, endMonth)
+        self.initialize_yeartype(display_name, start_year_offset, start_month, end_year_offset, end_month)
 
     @staticmethod
     def YearType_CALENDAR():
@@ -55,50 +55,50 @@ class YearType():
         yearType = YearType("YearMayToApr", 0, 5, 1, 4)
         return yearType
 
-    def initialize_YearType(self, displayName, startyearOffset, startMonth, endYearOffset, endMonth):
+    def initialize_yeartype(self, display_name, start_year_offset, start_month, end_year_offset, end_month):
         """
         Construct an enumeration value.
-        :param displayName: name that should be displayed in choices, etc.
-        :param startyearOffset: the offset to the calendar year for the start of the year.
+        :param display_name: name that should be displayed in choices, etc.
+        :param start_year_offset: the offset to the calendar year for the start of the year.
         For example, does the output year start in the same year as the calendar year (0),
         previous calendar year (-1), or next calendar year (1)?
-        :param startMonth: the first calendar month (1-12) for the year type.
-        :param endYearOffset: the offset to the calendar year for the end of the year.
+        :param start_month: the first calendar month (1-12) for the year type.
+        :param end_year_offset: the offset to the calendar year for the end of the year.
         For example, does the output year end in the same year as the calendar year (0),
         previous calendar year (-1), or next calendar year (1)?
-        :param endMonth: the last calendar month (1-12) for the year type
+        :param end_month: the last calendar month (1-12) for the year type
         """
-        self.__displayName = displayName
-        self.__startYearOffset = startyearOffset
-        self.__startMonth = startMonth
-        self.__endYearOffset = endYearOffset
-        self.__endMonth = endMonth
+        self.display_name = display_name
+        self.start_year_offset = start_year_offset
+        self.start_month = start_month
+        self.end_year_offset = end_year_offset
+        self.end_month = end_month
 
-    def getEndMonth(self):
+    def get_end_month(self):
         """
         Return the last month (1-12) in the year.
         :return: last month in the year.
         """
-        return self.__endMonth
+        return self.end_month
 
-    def getEndYearOffset(self):
+    def get_end_year_offset(self):
         """
         Return the end year offset.
         :return: the end year offset.
         """
-        return self.__endYearOffset
+        return self.end_year_offset
 
-    def getStartMonth(self):
+    def get_start_month(self):
         """
         Return the first month (1-12) in the year.
         :return: the first month in the year
         """
-        return self.__startYearOffset
+        return self.start_year_offset
 
-    def getStartYearOffset(self):
+    def get_start_year_offset(self):
         """
         Return the start year offset.
         For example, -1 indicates that the year starts in the previous calendar year.
         :return: the start year offset
         """
-        return self.__startYearOffset
+        return self.start_year_offset
