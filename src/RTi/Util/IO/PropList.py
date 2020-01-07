@@ -84,11 +84,11 @@ class PropList(object):
     props.read_persistent ( "somefile" );
     // Next, the application may check the file properties and assign some internal
     // defaults to have a full set of properties...
-    props.setHowSet ( Prop.SET_AS_RUNTIME_DEFAULT );
+    props.set_how_set ( Prop.SET_AS_RUNTIME_DEFAULT );
     // When a user interface is displayed...
-    props.setHowSet ( Prop.SET_AT_RUNTIME_BY_USER );
+    props.set_how_set ( Prop.SET_AT_RUNTIME_BY_USER );
     // ...User interaction...
-    props.setHowSet ( Prop.SET_UNKNOWN );
+    props.set_how_set ( Prop.SET_UNKNOWN );
     // Then there is usually custom code to write a specific PropList to a file.
     // Only properties that were originally read or have been modified by the user
     // may be written (internal defaults often make the property list verbose, but
@@ -120,16 +120,17 @@ class PropList(object):
         self.list_name = ""
 
         # List of Prop.
-        self.list = []
+        # - use "prop_list" rather than "list" because the latter is part of Python
+        self.prop_list = []
 
         # File to save in.
         self.persistent_name = ""
 
         # Format of file to read
-        self.persistent_format = int()
+        self.persistent_format = None
 
         # Last line read from the property file.
-        self.last_line_number_read = int()
+        self.last_line_number_read = None
 
         # Indicates if quotes should be treated literally when setting Prop values.
         self.literal_quotes = True
@@ -158,22 +159,26 @@ class PropList(object):
                 # PropList(list_name)
                 self.initialize(list_name, "", PropList.FORMAT_UNKNOWN)
 
-    def append(self, key, contents, is_literal):
+    def append(self, key, contents=None, value=None, is_literal=False):
         """
         Append a property to the list using a string key.
         :param key: String key for the property
-        :param contents: Contents for the property
-        :param is_literal:
+        :param contents: Contents for the property (any object type)
+        :param value: String value for property, str(contents) if None
+        :param is_literal: whether the property is a literal string (contents=value)
         """
-        prop = Prop(self.how_set, None, key, contents, str(contents))
+        int_key = None
+        if value is None:
+            value = str(contents)
+        prop = Prop(self.how_set, int_key, key, contents, value)
         prop.set_is_literal(is_literal)
-        self.list.append(prop)
+        self.prop_list.append(prop)
 
     def clear(self):
         """
         Remove all items from the PropList
         """
-        self.list.clear()
+        self.prop_list.clear()
 
     def element_at(self, pos):
         """
@@ -181,26 +186,37 @@ class PropList(object):
         :param pos: the position of the property to return (0+).
         :return: the Prop at the specified position.
         """
-        return self.list[pos]
+        return self.prop_list[pos]
 
     def find_prop(self, key):
         """
         Find a property in the list.
         :param key: The string key used to look up the property.
         """
-        for i, prop_i in enumerate(self.list):
+        for i, prop_i in enumerate(self.prop_list):
             prop_key = prop_i.get_key()
             if key.upper() == prop_key.upper():
                 # Have a match. Return the position...
                 return i
         return -1
 
+    def get_contents(self, key):
+        """
+        The data object for the property corresponding to the string key, or None if not found.
+        :param key: The string key used to look up the property
+        """
+        pos = self.find_prop(key)
+        if pos >= 0:
+            # Have a match. Get the value...
+            return self.prop_list[pos].get_contents(self)
+        return None
+
     def get_list(self):
         """
         Returns the list of Props.
         :return: the list of props.
         """
-        return self.list
+        return self.prop_list
 
     def get_persistent_name(self):
         """
@@ -211,13 +227,13 @@ class PropList(object):
 
     def get_value(self, key):
         """
-        The string value of the property corresponding to the string key, or null if not found.
+        The string value of the property corresponding to the string key, or None if not found.
         :param key: The string key used to look up the property
         """
         pos = self.find_prop(key)
         if pos >= 0:
             # We have a match. Get the value...
-            return self.list[pos].get_value(self)
+            return self.prop_list[pos].get_value(self)
         return None
 
     def initialize(self, list_name, persistent_name, persistent_format):
@@ -236,12 +252,11 @@ class PropList(object):
         else:
             self.persistent_name = persistent_name
         self.persistent_format = persistent_format
-        self.list = []
+        self.prop_list = []
         self.last_line_number_read = 0
 
     def read_persistent(self, append=None, include_literals=None):
         """
-        /**
         Read a property list from a persistent source.  The "how_set" flag for each
         property is set to Prop.SET_FROM_PERSISTENT.  The file can have the format:
         <pre>
@@ -289,9 +304,10 @@ class PropList(object):
         logger = logging.getLogger(__name__)
 
         if append is None:
+            # Default is to reset append when read
             append = True
-        else:
-            append = True
+        if include_literals is None:
+            # Default is store properties with content object and string object
             include_literals = False
 
         prefix = ""
@@ -307,10 +323,9 @@ class PropList(object):
         self.how_set = Prop.SET_FROM_PERSISTENT
         try:
             self.last_line_number_read = 0
-            length = 0
             with open(self.persistent_name) as f:
                 for line in f:
-                    line.strip()
+                    line = line.strip()
                     self.last_line_number_read += 1
                     if continuation:
                         # Take this line and add it to the previous. Add a space to separate tokens.
@@ -330,9 +345,9 @@ class PropList(object):
                             # Comment line
                             if include_literals:
                                 literal_count += 1
-                                self.append("Literal" + str(literal_count), line, True)
+                                self.append(key="Literal" + str(literal_count), contents=line, is_literal=True)
                             continue
-                        elif (line.startswith("<#") or line.startswith("</#")):
+                        elif line.startswith("<#") or line.startswith("</#"):
                             # Freemarker template syntax
                             continue
                     if line.find('#') != -1:
@@ -344,26 +359,26 @@ class PropList(object):
                         # ignore the rest of the line...
                         if include_literals:
                             literal_count += 1
-                            self.append("Literal" + str(literal_count), line, True)
+                            self.append(key="Literal" + str(literal_count), contents=line, is_literal=True)
                         continue
-                    if ((not in_comment) and line.startswith("/*")):
+                    if (not in_comment) and line.startswith("/*"):
                         in_comment = True
                         # For now the end of comment must be at the start of the line so ignore the rest of the
                         # line...
                         if include_literals:
                             literal_count += 1
-                            self.append("Literal" + str(literal_count), line, True)
+                            self.append(key="Literal" + str(literal_count), contents=line, is_literal=True)
                         continue
                     if in_comment:
                         # Did not detect an end to the comment above so skip the line...
                         if include_literals:
                             literal_count += 1
-                            self.append("Literal" + str(literal_count), line, True)
+                            self.append(key="Literal" + str(literal_count), contents=line, is_literal=True)
                         continue
                     if len(line) == 0:
                         if include_literals:
                             literal_count += 1
-                            self.append("Literal" + str(literal_count), line, True)
+                            self.append(key="Literal" + str(literal_count), contents=line, is_literal=True)
                         continue
                     if line[0] == '[':
                         # Block indicator - contents of [] will be prepended to property names
@@ -377,15 +392,18 @@ class PropList(object):
                         prefix = line[1: line.index(']')] + "."
                         if include_literals:
                             literal_count += 1
-                            self.append("Literal" + str(literal_count), line, True)
+                            self.append(key="Literal" + str(literal_count), contents=line, is_literal=True)
                         continue
-                    pos = line.index('=')
+                    try:
+                        pos = line.index('=')
+                    except ValueError:
+                        pos = -1
                     if pos < 0:
                         logger.warning("Missing equal sign on line " + str(self.last_line_number_read) + " of " +
                                        self.persistent_name + " (" + line + ")")
                         if include_literals:
                             literal_count += 1
-                            self.append("Literal" + str(literal_count), line, True)
+                            self.append(key="Literal" + str(literal_count), contents=line, is_literal=True)
                         continue
                     v = []
                     v.append(line[0:pos])
@@ -400,34 +418,51 @@ class PropList(object):
                             value = value[1: length - 1]
                         # Now set in the PropList
                         if len(name) > 0:
-                            self.append(name, value, False)
+                            self.append(key=name, contents=value, is_literal=False)
                     else:
                         logger.warning("Missing or too many equal signs on line " + str(self.last_line_number_read) +
                                        " of " + self.persistent_name + " (" + line + ")")
         except Exception as e:
             message = ("Exception caught while reading line " + str(self.last_line_number_read) + " of " +
                        self.persistent_name + ".")
-            logger.warning(message,e)
+            logger.warning(message, exc_info=True)
         # Clean up...
         self.how_set = how_set_prev
 
-    def set(self, prop):
+    def set(self, prop=None, key=None, value=None, replace=True):
         """
-        Set the property given a Prop.  If the property key exists, reset the property to the new information.
+        Set the property given a Prop or "Property=Value" string.
+        If the property key exists, reset the property to the new information.
         :param prop: The contents of the property.
+        :param key: Property name.
+        :param value: Property value.
+        :param replace: Whether to replace matched property.
         """
         replace = True
         # Find if this is already a property in this list...
-        if prop is None:
-            return
-        index = self.find_prop(prop.get_key())
-        if (index < 0) or not replace:
-            # Not currently in the list so add it...
-            self.append(prop.get_key(), prop.get_contents(), prop.get_value(self))
-        else:
-            # Already in the list so change it...
-            prop.setHowSet(self.how_set)
-            self.list[index] = prop
+        if prop is not None:
+            # Prop instance is provided
+            i = self.find_prop(prop.get_key())
+            if (i < 0) or not replace:
+                # Not currently in the list so add it...
+                self.append(key=prop.get_key(), contents=prop.get_contents(), value=prop.get_value(self))
+            else:
+                # Already in the list so change it...
+                prop.set_how_set(self.how_set)
+                self.prop_list[i] = prop
+        elif key is not None:
+            # String in format "key" = "value" is provided
+            i = self.find_prop(key)
+            if (i < 0) or not replace:
+                # Not currently in the list so add it...
+                self.append(key=key, contents=value, value=value)
+            else:
+                # Already in the list so change it...
+                prop = self.prop_list[i]
+                prop.set_key(key)
+                prop.set_contents(value)
+                prop.set_value(value)
+                prop.set_how_set(self.how_set)
 
     def set_persistent_name(self, persistent_name):
         if persistent_name is not None:
@@ -438,7 +473,7 @@ class PropList(object):
 
     def to_string(self, delim):
         s = ""
-        for i, prop in enumerate(self.list):
+        for i, prop in enumerate(self.prop_list):
             if i > 0:
                 s += delim
             if prop is None:

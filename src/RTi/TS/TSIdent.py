@@ -87,14 +87,36 @@ class TSIdent(object):
     # The quote can be used to surround TSID parts that have periods, so as to protect the part.
     PERIOD_QUOTE = "'"
 
-    # The DataFlavor for transferring this specific class.
-    # tsIdentFlavor = DataFlavor(TSIdent.class, "TSIdent")
+    # Debug for class
+    debug = False
 
     def __init__(self, full_location=None, full_source=None, full_type=None, interval_string=None,
                  scenario=None, input_type=None, input_name=None, mask=None, identifier=None,
-                 TSIdent=None):
+                 tsident=None):
+        """
+        Constructor for TSIdent, which handles various overloaded versions (as per Java code).
+        It should be called one of the following variations:
+        1) TSIdent() - default all values, generally when parts will be set incrementally.
+        2) TSIdent(mask) - similar to (1) but set the behavior mask
+        3) TSIdent(identifier) - set with a TSID string
+        4) TSIdent(identifier, mask) - set with a TSID string and mask
+        5) TSIdent(full_location, full_source, full_type, interval_string, scenario) - set using parts
+        6) TSIdent(full_location, full_source, full_type, interval_string, scenario, mask) - set using parts and mask
+        7) TSIdent(full_location, full_source, full_type, interval_string, scenario, input_type, input_name) - all parts
+        8) TSIdent(tsident) - copy constructor
+        :param full_location:
+        :param full_source:
+        :param full_type:
+        :param interval_string:
+        :param scenario:
+        :param input_type:
+        :param input_name:
+        :param mask:
+        :param identifier:
+        :param tsident:
+        """
 
-        # Data members...
+        # Define and set data members to initial values.
 
         # The whole identifier, including the input type.
         self.identifier = None
@@ -102,7 +124,7 @@ class TSIdent(object):
         # A comment that can be used to describe the TSID, for example on-line TSTool software comment.
         self.comment = ""
 
-        # A short alias for the time series identifer.
+        # A short alias for the time series identifier.
         self.alias = None
 
         # The location (combining the main location and the sub-location).
@@ -160,48 +182,84 @@ class TSIdent(object):
         # Mask that controls behavior (e.g., how sub-fields are handled).
         self.behavior_mask = 0
 
-        # Identifier will get set from its parts from its parts
-        self.init()
-
-        if mask is not None:
-            if identifier is not None:
-                # TSIdent(identifier, mask)
-                self.set_behavior_mask(mask)
-                self.set_identifier(identifier)
-            elif scenario is not None:
-                # TSIdent(full_location, full_source, full_type, interval_string, scenario, mask)
-
-                self.set_behavior_mask(mask)
-                self.set_identifier(full_location, full_source, full_type, interval_string, scenario, "", "")
-            else:
-                # TSIdent(mask)
-                self.set_behavior_mask(mask)
+        if (full_location is None) and (full_source is None) and (full_type is None) and \
+            (interval_string is None) and (scenario is None) and (input_type is None) and \
+                (input_name is None) and (mask is None) and (identifier is None) and (tsident is None):
+            # Variation 1 - nothing set, default constructor
+            self.init()
+        elif (full_location is None) and (full_source is None) and (full_type is None) and \
+            (interval_string is None) and (scenario is None) and (input_type is None) and \
+                (input_name is None) and (mask is not None) and (identifier is None) and (tsident is None):
+            # Variation 2 - only mask set
+            self.init()
+            self.set_behavior_mask(mask)
         elif identifier is not None:
+            # Variation 3
             # TSIdent(identifier)
-            self.set_identifier(identifier)
-        elif scenario is not None:
-            if input_type is not None:
-                # TSIdent(full_location_full_source, full_type, interval_string, scenario, input_type, input_name)
-                self.set_identifier(full_location, full_source, full_type, interval_string, scenario, input_type,
-                                    input_name)
-            else:
-                # TSIdent(full_location, full_source, full_type, interval_string, scenario)
-                self.set_identifier(full_location, full_source, full_type, interval_string, scenario, "", "")
+            self.init()
+            self.set_identifier(identifier=identifier)
+        elif (full_location is None) and (full_source is None) and (full_type is None) and \
+            (interval_string is None) and (scenario is None) and (input_type is None) and \
+                (input_name is None) and (mask is not None) and (identifier is not None) and (tsident is None):
+            # Variation 4 - identifier string and mask set
+            self.init()
+            self.set_behavior_mask(mask)
+            self.set_identifier(identifier=identifier)
+        elif (full_location is not None) and (full_source is not None) and (full_type is not None) and \
+            (interval_string is not None) and (scenario is not None) and (input_type is None) and \
+                (input_name is None) and (mask is None) and (identifier is None) and (tsident is None):
+            # Variation 5
+            self.init()
+            self.set_identifier(full_location=full_location, full_source=full_source, full_type=full_type,
+                                interval_string=interval_string, scenario=scenario, input_type="",
+                                input_name="")
+        elif (full_location is not None) and (full_source is not None) and (full_type is not None) and \
+            (interval_string is not None) and (scenario is not None) and (input_type is None) and \
+                (input_name is None) and (mask is not None) and (identifier is None) and (tsident is None):
+            # Variation 6
+            self.init()
+            self.set_behavior_mask(mask)
+            self.set_identifier(full_location=full_location, full_source=full_source, full_type=full_type,
+                                interval_string=interval_string, scenario=scenario, input_type="",
+                                input_name="")
+        elif (full_location is not None) and (full_source is not None) and (full_type is not None) and \
+            (interval_string is not None) and (scenario is not None) and (input_type is not None) and \
+                (input_name is not None):
+            # Variation 7
+            self.init()
+            self.set_identifier(full_location=full_location, full_source=full_source, full_type=full_type,
+                                interval_string=interval_string, scenario=scenario, input_type=input_type,
+                                input_name=input_name)
+        elif tsident is not None:
+            # Variation 8
+            # TSIdent(TSIdent)
+            self.init()
+            self.init_tsident(tsident)
+        else:
+            raise ValueError("TSIdent constructor is not supported.")
 
-        elif TSIdent is not None:
-            self.initializeTSIdent_TSIdent(TSIdent)
+    # TODO smalers 2020-01-05 need to implement __eq__
 
-    # TODO smalers 2019-12-31 need to implement Python default parameters
-    def initializeTSIdent_TSIdent(self, tsident):
+    def __str__(self):
+        """
+        Return a string representation of the time series identifier, calls to_string().
+        :return: string representation of time series identifier
+        """
+        return self.to_string()
+
+    def init_tsident(self, tsident):
         """
         Copy Constructor
         :param tsident: TSIdent to copy.
         """
+        self.init()
         self.set_alias(tsident.get_alias())
         self.set_behavior_mask(tsident.get_behavior_mask())
+        # Do not use the following!  It triggers infinite recursion!
+        # set_identifier(identifier=tsident.identifier)
         self.set_location_type(tsident.get_location_type())
         self.set_identifier(full_location=tsident.get_location(), full_source=tsident.get_source(),
-                            type=tsident.get_type(), interval_string=tsident.get_interval(),
+                            full_type=tsident.get_type(), interval_string=tsident.get_interval(),
                             scenario=tsident.get_scenario(), sequence_id=tsident.get_sequence_id(),
                             input_type=tsident.get_input_type(), input_name=tsident.get_input_name())
         self.interval_base = tsident.get_interval_base()
@@ -221,8 +279,10 @@ class TSIdent(object):
         """
         return self.behavior_mask
 
-    def get_identifier_from_parts(self, location_type, full_location, full_source, full_type, interval_string,
-                                  scenario, sequence_id, input_type, input_name):
+    def get_identifier_from_parts(self, location_type=None, full_location=None,
+                                  full_source=None, full_type=None, interval_string=None,
+                                  scenario=None, sequence_id=None, input_type=None,
+                                  input_name=None):
         """
         Return the full identifier given the parts.  This method may be called
         internally.  Null fields are treated as empty strings.
@@ -237,31 +297,63 @@ class TSIdent(object):
         :param input_name: Input name. If blank, the input name will not be added.
         :return: The full identifier string given the parts.
         """
-        full_identifier = ""
+        # Call the overloaded variations first, which will cascade to the generic case below
+        if (location_type is None) and (full_location is not None) and (full_source is not None) and \
+                (full_type is not None) and (interval_string is not None) and (scenario is not None) and \
+                (sequence_id is None) and (input_type is None) and (input_name is None):
+            return self.get_identifier_from_parts(full_location=full_location, full_source=full_source,
+                                                  full_type=full_type, interval_string=interval_string,
+                                                  scenario=scenario, sequence_id=None, input_type="", input_name="")
+        elif (location_type is None) and (full_location is not None) and (full_source is not None) and \
+                (full_type is not None) and (interval_string is not None) and (scenario is not None) and \
+                (sequence_id is not None) and (input_type is None) and (input_name is None):
+            return self.get_identifier_from_parts(full_location=full_location, full_source=full_source,
+                                                  full_type=full_type, interval_string=interval_string,
+                                                  scenario=scenario, sequence_id=sequence_id, input_type="",
+                                                  input_name="")
+        elif (location_type is None) and (full_location is not None) and (full_source is not None) and \
+             (full_type is not None) and (interval_string is not None) and (scenario is not None) and \
+             (sequence_id is None) and (input_type is not None) and (input_name is not None):
+            # TODO smalers 2020-01-05 Java code seems suspicious - is not setting input type and name?
+            return self.get_identifier_from_parts(full_location=full_location, full_source=full_source,
+                                                  full_type=full_type, interval_string=interval_string,
+                                                  scenario=scenario, sequence_id=None, input_type=input_type,
+                                                  input_name=input_name)
+        elif (location_type is None) and (full_location is not None) and (full_source is not None) and \
+             (full_type is not None) and (interval_string is not None) and (scenario is not None) and \
+             (sequence_id is not None) and (input_type is not None) and (input_name is not None):
+            return self.get_identifier_from_parts(location_type="", full_location=full_location,
+                                                  full_source=full_source,
+                                                  full_type=full_type, interval_string=interval_string,
+                                                  scenario=scenario, sequence_id=None, input_type=input_type,
+                                                  input_name=input_name)
+        else:
+            # Logic to handle the most verbose variation
+            full_identifier = ""
 
-        if (location_type is not None) and (len(location_type) > 0):
-            full_identifier += location_type + TSIdent.LOC_TYPE_SEPARATOR
-        if full_location is not None:
-            full_identifier += full_location
-        full_identifier += (TSIdent.SEPARATOR)
-        if full_source is not None:
-            full_identifier += full_source
-        full_identifier += TSIdent.SEPARATOR
-        if full_type is not None:
-            full_identifier += full_type
-        full_identifier += TSIdent.SEPARATOR
-        if interval_string is not None:
-            full_identifier += interval_string
-        if (scenario is not None) and (len(scenario) != 0):
+            if (location_type is not None) and (len(location_type) > 0):
+                full_identifier += location_type + TSIdent.LOC_TYPE_SEPARATOR
+            if full_location is not None:
+                full_identifier += full_location
             full_identifier += TSIdent.SEPARATOR
-            full_identifier += scenario
-        if (sequence_id is not None) and (len(sequence_id) != 0):
-            full_identifier += (TSIdent.SEQUENCE_NUMBER_LEFT + sequence_id + TSIdent.SEQUENCE_NUMBER_RIGHT)
-        if (input_type is not None) and (len(input_type) != 0):
-            full_identifier += "~" + input_type
-        if (input_name is not None) and (len(input_name) != 0):
-            full_identifier += "~" + input_name
-        return full_identifier
+            if full_source is not None:
+                full_identifier += full_source
+            full_identifier += TSIdent.SEPARATOR
+            if full_type is not None:
+                full_identifier += full_type
+            full_identifier += TSIdent.SEPARATOR
+            if interval_string is not None:
+                full_identifier += interval_string
+            if (scenario is not None) and (len(scenario) != 0):
+                full_identifier += TSIdent.SEPARATOR
+                full_identifier += scenario
+            if (sequence_id is not None) and (len(sequence_id) != 0):
+                full_identifier += (TSIdent.SEQUENCE_NUMBER_LEFT + sequence_id + TSIdent.SEQUENCE_NUMBER_RIGHT)
+            if (input_type is not None) and (len(input_type) != 0):
+                full_identifier += "~" + input_type
+            if (input_name is not None) and (len(input_name) != 0):
+                full_identifier += "~" + input_name
+            return full_identifier
 
     def get_input_name(self):
         """
@@ -312,6 +404,27 @@ class TSIdent(object):
         """
         return self.location_type
 
+    def get_main_location(self):
+        """
+        Return the main location.
+        :return: The main location.
+        """
+        return self.main_location
+
+    def get_main_source(self):
+        """
+        Return the main source.
+        :return: The main source.
+        """
+        return self.main_source
+
+    def get_main_type(self):
+        """
+        Return the main type.
+        :return: The main type.
+        """
+        return self.main_type
+
     def get_scenario(self):
         """
         Return the scenario string.
@@ -336,6 +449,27 @@ class TSIdent(object):
         :return: The full source string.
         """
         return self.full_source
+
+    def get_sub_location(self):
+        """
+        Return the sub location string.
+        :return: The sub location string.
+        """
+        return self.sub_location
+
+    def get_sub_source(self):
+        """
+        Return the sub source string.
+        :return: The sub source string.
+        """
+        return self.sub_source
+
+    def get_sub_type(self):
+        """
+        Return the sub type string.
+        :return: The sub type string.
+        """
+        return self.sub_type
 
     def get_type(self):
         """
@@ -374,8 +508,8 @@ class TSIdent(object):
         self.set_full_identifier("")
 
         # Initialize the location components...
-        self.set_main_location("")
 
+        self.set_main_location("")
         self.set_sub_location("")
 
         # Initialize the source...
@@ -393,7 +527,7 @@ class TSIdent(object):
         self.interval_mult = 0
 
         try:
-            self.set_interval_interval_string("")
+            self.set_interval(interval_string="")
         except Exception as e:
             # Can ignore here
             pass
@@ -406,35 +540,40 @@ class TSIdent(object):
         self.set_input_type("")
         self.set_input_name("")
 
+    # TODO smalers 2020-01-05 need to implement matches
+
     @staticmethod
-    def parse_identifier(identifier, behavior_flag):
+    def parse_identifier(identifier, behavior_mask=None):
         """
         Parse a TSIdent instance given a String representation of the identifier.
         :param identifier: Full identifier as string.
-        :param behavior_flag: Behavior mask to use when creating instance.
+        :param behavior_mask: Behavior mask to use when creating instance.
         :return: A TSIdent instance given a full identifier string.
         """
+        # Handle overloaded versions
+        if behavior_mask is None:
+            behavior_mask = 0  # default
+
+        # Main logic
         logger = logging.getLogger(__name__)
         dl = 100
 
         # Declare a TSIdent which we will fill and return..
-        tsident = TSIdent(mask=behavior_flag)
+        tsident = TSIdent(mask=behavior_mask)
 
         # First parse the datastore and input type information...
 
         identifier0 = identifier
-        list = StringUtil.break_string_list(identifier, "~", 0)
-        print(list)
-        i = int()
-        nlist1 = int()
-        if list is not None:
-            nlist1 = len(list)
+        part_list = StringUtil.break_string_list(identifier, "~", 0)
+        print(part_list)
+        if part_list is not None:
+            nlist1 = len(part_list)
             # Reset to first part for checks below...
-            identifier = list[0]
+            identifier = part_list[0]
             if nlist1 == 2:
-                tsident.set_input_type(list[1])
+                tsident.set_input_type(part_list[1])
             elif nlist1 >= 3:
-                tsident.set_input_type(list[1])
+                tsident.set_input_type(part_list[1])
                 # File name may have a ~ so find the second instance
                 # of ~ and use the remaining string...
                 pos = identifier0.find("~")
@@ -461,18 +600,18 @@ class TSIdent(object):
         if pos_quote >= 0:
             # Have at least one quote so assume TSID something like:
             # LocaId.Source. 'DataType-some.parts.with.pariods'.Interval
-            list = TSIdent.parse_identifier_split_with_quotes(identifier)
+            part_list = TSIdent.parse_identifier_split_with_quotes(identifier)
         else:
             # No quote in TSID so do simple parse
-            list = StringUtil.break_string_list(identifier, ".", 0)
-        nlist1 = len(list)
+            part_list = StringUtil.break_string_list(identifier, ".", 0)
+        nlist1 = len(part_list)
 
         # Parse out location and split the rest of the ID...
         # This field is allowed to be surrounded by quotes since some
         # locations cannot be identifier by a simple string. Allow
         # either ' or " to be used and bracket it.
         location_type_sep_pos = -1
-        if (identifier[0] != '\'') and (identifier[0] != '\"'):
+        if (identifier[0] != "'") and (identifier[0] != '"'):
             # There is not a quoted location string so there is the possibility of having a location type
             # This logic looks at teh full string. If the separator is after a period, then the colon is
             # being detected other than at the start in the location.
@@ -486,38 +625,38 @@ class TSIdent(object):
             # as the location identifier for further processing.
             location_type = identifier[0:location_type_sep_pos]
             identifier = identifier[location_type_sep_pos + 1:]
-        if (identifier[0] == '\'') or (identifier[0] == '\"'):
+        if (identifier[0] == "'") or (identifier[0] == '"'):
             full_location = StringUtil.read_to_delim(identifier[1:], identifier[0])
             # Get the 2nd+ fields...
             pos_quote2 = identifier.find("'")
             if pos_quote2 > 0:
                 # Have at least one quote so assume TSID something like:
                 # LocId.Source.'DataType-some.parts.with.periods'.Interval
-                list = TSIdent.parse_identifier_split_with_quotes(identifier[len(full_location) + 1:])
+                part_list = TSIdent.parse_identifier_split_with_quotes(identifier[len(full_location) + 1:])
             else:
-                list = StringUtil.break_string_list(identifier[len(full_location) + 1], ".", 0)
-            nlist1 = len(list)
+                part_list = StringUtil.break_string_list(identifier[len(full_location) + 1], ".", 0)
+            nlist1 = len(part_list)
         else:
             pos_quote2 = identifier.find("'")
             if pos_quote2 >= 0:
                 # Have at least one quote so assume TSID something like:
                 # LocaId.Source.'DataType-some.parts.with.periods'.Interval
-                list = TSIdent.parse_identifier_split_with_quotes(identifier)
+                part_list = TSIdent.parse_identifier_split_with_quotes(identifier)
             else:
-                list = StringUtil.break_string_list(identifier, ".", 0)
-            nlist1 = len(list)
+                part_list = StringUtil.break_string_list(identifier, ".", 0)
+            nlist1 = len(part_list)
             if nlist1 >= 1:
-                full_location = list[0]
+                full_location = part_list[0]
         # Data source...
         if nlist1 >= 2:
-            full_source = list[1]
+            full_source = part_list[1]
         # Data type...
         if nlist1 >= 3:
-            full_type = list[2]
+            full_type = part_list[2]
         # Data interval...
         sequence_id = None
         if nlist1 >= 4:
-            interval_string = list[3]
+            interval_string = part_list[3]
             # If no scenario is used, the interval string may have the sequence ID on the end, so search
             # for the p and split the sequence ID out of the interval string...
             index = interval_string.find(TSIdent.SEQUENCE_NUMBER_LEFT)
@@ -525,7 +664,7 @@ class TSIdent(object):
             if index >= 0:
                 if interval_string.endswith(TSIdent.SEQUENCE_NUMBER_RIGHT):
                     # Should be properly-formed sequence_id, but need to remove the brackets...
-                    sequence_id = interval_string[index+1:len(interval_string)-1].strip()
+                    sequence_id = interval_string[index + 1:len(interval_string) - 1].strip()
                 if index == 0:
                     # There is no interval, just the sequence ID (should not happen)...
                     interval_string = ""
@@ -536,10 +675,10 @@ class TSIdent(object):
         # fields to compose the complete scenario...
         if nlist1 >= 5:
             buffer = ""
-            buffer += list[4]
-            for i in range(nlist1):
+            buffer += part_list[4]
+            for i in range(5, nlist1):
                 buffer += "."
-                buffer += list[i]
+                buffer += part_list[i]
             scenario = buffer
         # The scenario may now have the sequence ID on the end, search for the [ and split out of the
         # scenario...
@@ -548,7 +687,7 @@ class TSIdent(object):
         if index >= 0:
             if scenario.endswith(TSIdent.SEQUENCE_NUMBER_RIGHT):
                 # Should be a properly-formed sequence ID...
-                sequence_id = scenario[index+1:len(scenario)-1].strip()
+                sequence_id = scenario[index + 1:len(scenario) - 1].strip()
             if index == 0:
                 # There is no scenario, just the sequence ID...
                 scenario = ""
@@ -558,10 +697,10 @@ class TSIdent(object):
         # Now set the identifier component parts...
 
         tsident.set_location_type(location_type)
-        tsident.set_location2(full_location)
+        tsident.set_location(full_location=full_location)
         tsident.set_source(full_source)
         tsident.set_type(full_type)
-        tsident.set_interval_interval_string(interval_string)
+        tsident.set_interval_string(interval_string)
         tsident.set_scenario(scenario)
         tsident.set_sequence_id(sequence_id)
 
@@ -650,74 +789,13 @@ class TSIdent(object):
         """
         self.behavior_mask = behavior_mask
 
-    def set_identifier(self, identifier=None, full_location=None, full_source=None, full_type=None, type=None,
-                       interval_string=None, scenario=None, sequence_id=None, input_type=None, input_name=None):
+    def set_comment(self, comment):
         """
-        Set the identifier
-        :param identifier: Full identifier string.
-        :param full_location: Full location string.
-        :param full_source: Full source string.
-        :param full_type: Full data type.
-        :param type: Data type.
-        :param interval_string: Data interval string.
-        :param scenario: Scenario string.
-        :param sequence_id: sequence identifier (for time series in ensemble).
-        :param input_type: Input type.
-        :param input_name: Input name
+        Se the comment for the identifier.
+        :param comment: comment for the identifier
         """
-        logger = logging.getLogger(__name__)
-        dl = 100
-
-        if identifier is None:
-            # Assume that all the individual set routines have handled the
-            # behavior_mask accordingly and therefore we can just concatenate
-            # strings here...
-
-            full_identifier = ""
-            full_identifier = self.get_identifier_from_parts(self.location_type, self.full_location,
-                                                             self.full_source, self.full_type, self.interval_string,
-                                                             self.scenario, self.sequence_id, self.input_type,
-                                                             self.input_name)
-            self.set_full_identifier(full_identifier)
-        elif identifier is not None:
-            # Parse the identifier using the public static function to create a temporary identifier object...
-
-            tsident = self.parse_identifier(identifier, self.behavior_mask)
-
-            # Now copy the temporary coopy into this instance.
-
-            self.set_location_type(tsident.get_location_type())
-            self.set_location2(tsident.get_location())
-            self.set_source(tsident.get_source())
-            self.set_type(tsident.get_type())
-            self.set_interval_interval_string(tsident.get_interval())
-            self.set_scenario(tsident.get_scenario())
-            self.set_sequence_id(tsident.get_sequence_id())
-            self.set_input_type(tsident.get_input_type())
-            self.set_input_name(tsident.get_input_name())
-        elif full_type is not None:
-            self.set_location2(full_location)
-            self.set_source(full_source)
-            self.set_type(full_type)
-            self.set_interval_interval_string(interval_string)
-            self.set_scenario(scenario)
-        elif sequence_id is not None:
-            self.set_location2(full_location)
-            self.set_source(full_source)
-            self.set_type(type)
-            self.set_interval_interval_string(interval_string)
-            self.set_scenario(scenario)
-            self.set_sequence_id(sequence_id)
-            self.set_input_type(input_type)
-            self.set_input_name(input_name)
-        else:
-            self.set_location2(full_location)
-            self.set_source(full_source)
-            self.set_type(type)
-            self.set_interval_interval_string(interval_string)
-            self.set_scenario(scenario)
-            self.set_input_type(input_type)
-            self.set_input_name(input_name)
+        if comment is not None:
+            self.comment = comment
 
     def set_full_identifier(self, full_identifier):
         """
@@ -728,7 +806,7 @@ class TSIdent(object):
         if full_identifier is None:
             return
         self.identifier = full_identifier
-        # DO NOT call setIdentifer() from here!
+        # DO NOT call set_identifier() from here!
 
     def set_full_location(self, full_location):
         """
@@ -763,6 +841,145 @@ class TSIdent(object):
         self.full_type = full_type
         # DO NOT call set_identifier() from here!
 
+    def set_identifier(self, identifier=None, full_location=None, full_source=None, full_type=None,
+                       interval_string=None, scenario=None, sequence_id=None, input_type=None, input_name=None,
+                       tsident=None):
+        """
+        Set the identifier
+        :param identifier: Full identifier string.
+        :param full_location: Full location string.
+        :param full_source: Full source string.
+        :param full_type: Full data type.
+        :param interval_string: Data interval string.
+        :param scenario: Scenario string.
+        :param sequence_id: sequence identifier (for time series in ensemble).
+        :param input_type: Input type.
+        :param input_name: Input name
+        :param tsident: TSIdent instance to copy
+        """
+        logger = logging.getLogger(__name__)
+
+        if (identifier is None) and (full_location is None) and (full_source is None) and (full_type is None) and \
+            (interval_string is None) and (scenario is None) and (sequence_id is None) and \
+                (input_type is None) and (input_name is None):
+            # Case where all parameters are None and the identifier can be formed by the parts in the instance:
+            # set_identifier()
+
+            # Assume that all the individual set routines have handled the
+            # behavior_mask accordingly and therefore we can just concatenate
+            # strings here...
+
+            if self.debug:
+                logger.debug("Setting full identifier from parts: \"" + str(self.full_location) +
+                    "." + str(self.full_source) + "." + str(self.full_type) +"." + str(self.interval_string) +
+                    "." + str(self.scenario) + "~" + str(self.input_type) + "~" + str(self.input_name))
+
+            if self.debug:
+                logger.debug("Calling get_identifier_from_parts..." )
+            full_identifier = self.get_identifier_from_parts(location_type=self.location_type,
+                                                             full_location=self.full_location,
+                                                             full_source=self.full_source,
+                                                             full_type=self.full_type,
+                                                             interval_string=self.interval_string,
+                                                             scenario=self.scenario,
+                                                             sequence_id=self.sequence_id,
+                                                             input_type=self.input_type,
+                                                             input_name=self.input_name)
+            if self.debug:
+                logger.debug("...successfully called get_identifier_from_parts...")
+            self.set_full_identifier(full_identifier)
+            if self.debug:
+                logging.debug("ID: \"" + str(self.identifier) + "\"")
+
+        elif (identifier is not None) and (full_location is None) and (full_source is None) and \
+             (full_type is None) and (interval_string is None) and (scenario is None) and (sequence_id is None) and \
+                (input_type is None) and (input_name is None):
+            # Case where only identifier string is not None:
+            # set_identifier(identifier)
+            if identifier is None:
+                return
+
+            if self.debug:
+                logger.debug("Trying to set identifier to \"" + identifier + "\"")
+
+            if len(identifier) == 0:
+                # Cannot parse the identifier because doing so would result in an infinite loop.
+                # If this routine is being called with an empty string, it is a mistake.
+                # The initialization code will call set_full_identifier() directly.
+                if self.debug:
+                    logger.debug("Identifier string is empty, not processing!")
+                return
+
+            # Parse the identifier using the public static function to create a temporary identifier object...
+
+            if self.debug:
+                logger.debug("Done declaring temp TSIdent.")
+                logger.debug("Parsing identifier...")
+
+            tsident = TSIdent.parse_identifier(identifier, behavior_mask=self.behavior_mask)
+            if self.debug:
+                logger.debug("...back from parsing identifier")
+
+            # Now copy the temporary copy into this instance...
+
+            if self.debug:
+                logger.debug("Setting the individual parts...")
+                self.set_location_type(tsident.get_location_type())
+                self.set_location(full_location=tsident.get_location())
+                self.set_source(source=tsident.get_source())
+                self.set_type(tsident.get_type())
+                self.set_interval(tsident.get_interval())
+                self.set_scenario(tsident.get_scenario())
+                self.set_sequence_id(tsident.get_sequence_id())
+                self.set_input_type(tsident.get_input_type())
+                self.set_input_name(tsident.get_input_name())
+        elif (identifier is None) and (full_location is not None) and (full_source is not None) and \
+                (full_type is not None) and (interval_string is not None) and (scenario is not None) and \
+                (sequence_id is None) and (input_type is None) and (input_name is None):
+            # set_identifier(full_location, full_source, full_type, interval_string, scenario)
+            self.set_location(full_location=full_location)
+            self.set_source(source=full_source)
+            self.set_type(full_type)
+            self.set_interval(interval_string)
+            self.set_scenario(scenario)
+        elif (identifier is None) and (full_location is not None) and (full_source is not None) and \
+                (full_type is not None) and (interval_string is not None) and (scenario is not None) and \
+                (sequence_id is None) and (input_type is not None) and (input_name is not None):
+            # set_identifier(full_location, full_source, type, interval_string, scenario, input_type, input_name)
+            self.set_location(full_location=full_location)
+            self.set_source(source=full_source)
+            self.set_type(full_type)
+            self.set_interval(interval_string)
+            self.set_scenario(scenario)
+            self.set_input_type(input_type)
+            self.set_input_name(input_name)
+        elif (identifier is None) and (full_location is not None) and (full_source is not None) and \
+                 (full_type is not None) and (interval_string is not None) and (scenario is not None) and \
+                 (sequence_id is not None) and (input_type is not None) and (input_name is not None):
+            # set_identifier(full_location, full_source, type, interval_string, scenario, sequence_id,
+            # input_type, input_name)
+            # All not None
+            self.set_location(full_location=full_location)
+            self.set_source(source=full_source)
+            self.set_type(full_type)
+            self.set_interval(interval_string)
+            self.set_scenario(scenario)
+            self.set_sequence_id(sequence_id)
+            self.set_input_type(input_type)
+            self.set_input_name(input_name)
+        else:
+            raise ValueError("Unsupported parameters for set_identifier(): " +
+                             "identifier=" + str(identifier) +
+                             " full_location=" + str(full_location) +
+                             " full_source=" + str(full_source) +
+                             " full_type=" + str(full_type) +
+                             " interval_string=" + str(interval_string) +
+                             " scenario=" + str(scenario) +
+                             " sequence_id=" + str(sequence_id) +
+                             " input_type=" + str(input_type) +
+                             " input_name=" + str(input_name) +
+                             " tsident=" + str(tsident))
+
     def set_input_name(self, input_name):
         """
         Set the input name.
@@ -779,83 +996,82 @@ class TSIdent(object):
         if input_type is not None:
             self.input_type = input_type
 
-    def set_interval_interval_string(self, interval_string):
+    def set_interval(self, interval_string=None, interval_base=None, interval_mult=None):
         """
-        Set the interval given the interval string
+        Set the interval given the interval string or base and multipler.
         :param interval_string: Data interval string
-        """
-        dl = 100
-        tsinterval = None
-        if interval_string is None:
-            return
-        if (interval_string != "*") and (len(interval_string) > 0):
-            # First split the string into its base and multiplier...
-            if (self.behavior_mask & TSIdent.NO_VALIDATION) == 0:
-                try:
-                    tsinterval = TimeInterval.parse_interval(interval_string)
-                except:
-                    # Not validating so let this pass...
-                    pass
-            else:
-                tsinterval = TimeInterval.parse_interval(interval_string)
-
-            # Now set the base and multiplier...
-            if tsinterval is not None:
-                self.interval_base = tsinterval.getBase()
-                self.interval_mult = tsinterval.getMultiplier()
-        # Else, don't do anything (leave as zero initialized values).
-
-        # Now set the interval string. Use the given interval base string
-        # because we need to preserve existing file names, etc.
-        self.set_interval_string(interval_string)
-        self.set_identifier()
-
-    # TODO smalers 2019-12-31 need to overload using Python optional parameters
-    def set_interval_interval_base_interval_mult(self, interval_base, interval_mult):
-        """
-        Set the interval given the interval integer values.
         :param interval_base: Base interval (see TimeInterval.*)
         :param interval_mult: Base interval multiplier.
         """
-        logger = logging.getLogger(__name__)
-        if interval_mult <= 0:
-            logger.warning("Interval multiplier ({}) must be greater than zero".format(interval_mult))
-        if ((interval_base != TimeInterval.SECOND) and
-                (interval_base != TimeInterval.MINUTE) and
-                (interval_base != TimeInterval.HOUR) and
-                (interval_base != TimeInterval.DAY) and
-                (interval_base != TimeInterval.WEEK) and
-                (interval_base != TimeInterval.MONTH) and
-                (interval_base != TimeInterval.YEAR) and
-                (interval_base != TimeInterval.IRREGULAR)):
+        if interval_string is not None:
+            if interval_string is None:
+                return
+            if (interval_string != "*") and (len(interval_string) > 0):
+                # First split the string into its base and multiplier...
+                tsinterval = None
+                if (self.behavior_mask & TSIdent.NO_VALIDATION) == 0:
+                    try:
+                        tsinterval = TimeInterval.parse_interval(interval_string)
+                    except:
+                        # Not validating so let this pass...
+                        pass
+                else:
+                    tsinterval = TimeInterval.parse_interval(interval_string)
+
+                # Now set the base and multiplier...
+                if tsinterval is not None:
+                    self.interval_base = tsinterval.get_base()
+                    self.interval_mult = tsinterval.get_multiplier()
+            # Else, don't do anything (leave as zero initialized values).
+
+            # Now set the interval string. Use the given interval base string
+            # because we need to preserve existing file names, etc.
+            self.set_interval_string(interval_string)
+            self.set_identifier()
+
+        elif (interval_base is not None) and (interval_mult is not None):
+            # Set the interval using the interval base and multiplier
+            logger = logging.getLogger(__name__)
+            if interval_mult <= 0:
+                logger.warning("Interval multiplier ({}) must be greater than zero".format(interval_mult))
+            if (interval_base != TimeInterval.SECOND) and \
+                    (interval_base != TimeInterval.MINUTE) and \
+                    (interval_base != TimeInterval.HOUR) and \
+                    (interval_base != TimeInterval.DAY) and \
+                    (interval_base != TimeInterval.WEEK) and \
+                    (interval_base != TimeInterval.MONTH) and \
+                    (interval_base != TimeInterval.YEAR) and \
+                    (interval_base != TimeInterval.IRREGULAR):
                 logger.warning("Base interval ({}) is not recognized".format(interval_base))
                 return
-        self.interval_base = interval_base
-        self.interval_mult = interval_mult
+            self.interval_base = interval_base
+            self.interval_mult = interval_mult
 
-        # Now need to set the string representation of the interval...
-        interval_string = ""
-        if (interval_base != TimeInterval.IRREGULAR) and (interval_mult != 1):
-            interval_string += interval_mult
-        if interval_base == TimeInterval.SECOND:
-            interval_string += "sec"
-        elif interval_base == TimeInterval.MINUTE:
-            interval_string += "min"
-        elif interval_base == TimeInterval.HOUR:
-            interval_string += "hour"
-        elif interval_base == TimeInterval.DAY:
-            interval_string += "day"
-        elif interval_base == TimeInterval.WEEK:
-            interval_string += "week"
-        elif interval_base == TimeInterval.MONTH:
-            interval_string += "month"
-        elif interval_base == TimeInterval.YEAR:
-            interval_string += "year"
-        elif interval_base == TimeInterval.IRREGULAR:
-            interval_string += "irreg"
+            # Now need to set the string representation of the interval...
+            interval_string = ""
+            if (interval_base != TimeInterval.IRREGULAR) and (interval_mult != 1):
+                interval_string += interval_mult
+            if interval_base == TimeInterval.SECOND:
+                interval_string += "sec"
+            elif interval_base == TimeInterval.MINUTE:
+                interval_string += "min"
+            elif interval_base == TimeInterval.HOUR:
+                interval_string += "hour"
+            elif interval_base == TimeInterval.DAY:
+                interval_string += "day"
+            elif interval_base == TimeInterval.WEEK:
+                interval_string += "week"
+            elif interval_base == TimeInterval.MONTH:
+                interval_string += "month"
+            elif interval_base == TimeInterval.YEAR:
+                interval_string += "year"
+            elif interval_base == TimeInterval.IRREGULAR:
+                interval_string += "irreg"
 
-        self.set_interval_interval_string(interval_string)
-        self.set_identifier()
+            self.set_interval_string(interval_string)
+            self.set_identifier()
+        else:
+            raise ValueError("Invalid parameters to set_interval")
 
     def set_interval_string(self, interval_string):
         """
@@ -865,73 +1081,90 @@ class TSIdent(object):
         if interval_string is not None:
             self.interval_string = interval_string
 
-    def set_location(self):
+    def set_location(self, main_location=None, sub_location=None, full_location=None):
         """
         Set the full location from its parts. This method is generally called from
         set_main_location() and set_sub_location() methods to reset full_location.
-        """
-        logger = logging.getLogger(__name__)
-        dl = 100
-
-        if (self.behavior_mask & TSIdent.NO_SUB_LOCATION) != 0:
-            # Just use the main location as the full location...
-            if self.main_location is not None:
-                # There should always be a main location after the object is initialized...
-                self.set_full_location(self.main_location)
-        else:
-            # Concatenate the main and sub-locations to get the full location
-            full_location = ""
-            # We may want to check for main_location[] also...
-            if self.main_location is not None:
-                # This should always be the case after the object is initialized...
-                full_location += self.main_location
-                if self.sub_location is not None:
-                    # We only want to add the sublocation if it is not
-                    # an empty string (it will be an empty string after the
-                    # object is initialized).
-                    if len(self.sub_location) > 0:
-                        # Have a sub_location so append it to the main location...
-                        full_location += TSIdent.LOCATION_SEPARATOR
-                        full_location += self.sub_location
-                self.set_full_location(full_location)
-        # Now reset the full identifier...
-        self.set_identifier()
-
-    def set_location2(self, full_location):
-        """
-        Set the full location from its full string.
         :param full_location: The full location string.
+        :param main_location: The main location string.
+        :param sub_location: The sub location string.
         """
         logger = logging.getLogger(__name__)
-        dl = 100
 
-        if full_location is None:
-            return
-        if (self.behavior_mask & TSIdent.NO_SUB_LOCATION) != 0:
-            # The entire string passed in is used for the main location...
-            self.set_main_location(full_location)
-        else:
-            # Need to split the location into main and sub-location...
-            list = []
-            sub_location = ""
-            nlist = int()
-            list = StringUtil.break_string_list(full_location, TSIdent.LOCATION_SEPARATOR, 0)
-            nlist = len(list)
-            if nlist >= 1:
-                # Set the main location...
-                self.set_main_location(list[0])
-            if nlist >= 2:
-                # Now set the sub-location. This allows for multiple delimited
-                # parts (everything after the first delimiter is treated as the sublocation).
-                iend = nlist - 1
-                for i in range(iend + 1):
-                    if i != 1:
-                        sub_location += TSIdent.LOCATION_SEPARATOR
-                    sub_location += list[i]
-                self.set_sub_location(sub_location)
+        if self.debug:
+            logger.debug("Resetting full location from parts...")
+        if (main_location is None) and (sub_location is None) and (full_location is None):
+            # set_location()
+            if self.debug:
+                logger.debug("Resetting location from saved parts")
+            if (self.behavior_mask & TSIdent.NO_SUB_LOCATION) != 0:
+                # Just use the main location as the full location...
+                if self.main_location is not None:
+                    # There should always be a main location after the object is initialized...
+                    self.set_full_location(self.main_location)
             else:
-                # Since only setting the main location need to set the sub-location to an empty string...
-                self.set_sub_location("")
+                # Concatenate the main and sub-locations to get the full location
+                full_location = ""
+                # We may want to check for main_location[] also...
+                if self.main_location is not None:
+                    # This should always be the case after the object is initialized...
+                    full_location += self.main_location
+                    if self.sub_location is not None:
+                        # We only want to add the sublocation if it is not
+                        # an empty string (it will be an empty string after the
+                        # object is initialized).
+                        if len(self.sub_location) > 0:
+                            # Have a sub_location so append it to the main location...
+                            full_location += TSIdent.LOCATION_SEPARATOR
+                            full_location += self.sub_location
+                    self.set_full_location(full_location)
+            # Now reset the full identifier...
+            self.set_identifier()
+        elif (main_location is not None) and (sub_location is not None):
+            # Set the location from main and sub parts
+            if self.debug:
+                logger.debug("Resetting location from main and sub")
+            self.set_main_location(main_location)
+            self.set_sub_location(sub_location)
+            # The full location will be set when the parts are set.
+        elif (main_location is not None) and (sub_location is None):
+            # Set the location from main and sub parts
+            if self.debug:
+                logger.debug("Resetting location from main")
+            self.set_main_location(main_location)
+            # The full location will be set when the parts are set.
+        elif full_location is not None:
+            # Set the full location from its full string.
+            if self.debug:
+                logger.debug("Resetting location from full location")
+
+            # if full_location is None:
+            #    return
+            if (self.behavior_mask & TSIdent.NO_SUB_LOCATION) != 0:
+                # The entire string passed in is used for the main location...
+                self.set_main_location(full_location)
+            else:
+                # Need to split the location into main and sub-location...
+                sub_location = ""
+                part_list = StringUtil.break_string_list(full_location, TSIdent.LOCATION_SEPARATOR, 0)
+                nlist = len(part_list)
+                if nlist >= 1:
+                    # Set the main location...
+                    self.set_main_location(part_list[0])
+                if nlist >= 2:
+                    # Now set the sub-location. This allows for multiple delimited
+                    # parts (everything after the first delimiter is treated as the sublocation).
+                    iend = nlist - 1
+                    for i in range(iend + 1):
+                        if i != 1:
+                            sub_location += TSIdent.LOCATION_SEPARATOR
+                        sub_location += part_list[i]
+                    self.set_sub_location(sub_location)
+                else:
+                    # Since only setting the main location need to set the sub-location to an empty string...
+                    self.set_sub_location("")
+        else:
+            raise ValueError("Invalid parameters for set_location()")
 
     def set_location_type(self, location_type):
         """
@@ -991,12 +1224,15 @@ class TSIdent(object):
         self.sequence_id = sequence_id
         self.set_identifier()
 
-    def set_source(self, source=None):
+    def set_source(self, source=None, main_source=None, sub_source=None):
         """
-        Set the full source from a full string.
+        Set the full source from internal parts, from a full string, or from main and sub parts.
         :param source: the full source string
+        :param main_source: the main source string
+        :param sub_source: the sub source string
         """
-        if source is None:
+        if (source is None) and (main_source is None) and (sub_source is None):
+            # set_source()
             if (self.behavior_mask & TSIdent.NO_SUB_SOURCE) != 0:
                 # Just use the main source as the full source...
                 if self.main_source is not None:
@@ -1019,7 +1255,8 @@ class TSIdent(object):
             # Now reset the full identifier...
             self.set_identifier()
             return
-        else:
+        elif (source is not None) and (main_source is None) and (sub_source is None):
+            # set_source(source)
             if source == "":
                 self.set_main_source("")
                 self.set_sub_source("")
@@ -1028,19 +1265,17 @@ class TSIdent(object):
                 self.set_main_source(source)
             else:
                 # Need to split the source into main and sub-source...
-                list = []
-                nlist = int()
                 sub_source = ""
-                list = StringUtil.break_string_list(source, TSIdent.SOURCE_SEPARATOR, 0)
-                nlist = len(list)
+                part_list = StringUtil.break_string_list(source, TSIdent.SOURCE_SEPARATOR, 0)
+                nlist = len(part_list)
                 if nlist >= 1:
                     # Set the main source...
-                    self.set_main_source(list[0])
+                    self.set_main_source(part_list[0])
                 if nlist >= 2:
                     # Now set the sub-source...
                     iend = nlist - 1
                     for i in range(iend + 1):
-                        sub_source += list[i]
+                        sub_source += part_list[i]
                         if i != iend:
                             sub_source += TSIdent.SOURCE_SEPARATOR
                     self.set_sub_source(sub_source)
@@ -1048,6 +1283,13 @@ class TSIdent(object):
                     # Since we are only setting the main location we need
                     # to set the sub-location to an empty string...
                     self.set_sub_source("")
+        elif (source is None) and (main_source is not None) and (sub_source is not None):
+            # set_source(main_source, sub_source)
+            self.set_main_source(main_source)
+            self.set_sub_source(sub_source)
+            # The full source will be set when the parts are set.
+        else:
+            raise ValueError("Invalid parameters for set_source()")
 
     def set_sub_source(self, sub_source):
         """
@@ -1087,6 +1329,7 @@ class TSIdent(object):
         """
         logger = logging.getLogger(__name__)
         if type is None:
+            # set_type()
             if (self.behavior_mask & TSIdent.NO_SUB_TYPE) != 0:
                 # Just use the main type as the full type...
                 if self.main_type is not None:
@@ -1110,24 +1353,23 @@ class TSIdent(object):
             # Now reset the full identifier...
             self.set_identifier()
         else:
+            # set_type(type)
             if (self.behavior_mask & TSIdent.NO_SUB_TYPE) != 0:
                 # The entire string passed in is used for the main data type...
                 self.set_main_type(type)
             else:
                 # Need to split the data type into main and sub-locaiton...
-                list = []
                 sub_type = ""
-                nlist = int()
-                list = StringUtil.break_string_list(type, TSIdent.TYPE_SEPARATOR, 0)
-                nlist = len(list)
+                part_list = StringUtil.break_string_list(type, TSIdent.TYPE_SEPARATOR, 0)
+                nlist = len(part_list)
                 if nlist >= 1:
                     # Set the mian type...
-                    self.set_main_type(list[0])
+                    self.set_main_type(part_list[0])
                 if nlist >= 2:
                     # Now set the sub-type...
                     iend = nlist - 1
                     for i in range(iend + 1):
-                        sub_type += list[i]
+                        sub_type += part_list[i]
                         if i != iend:
                             sub_type += TSIdent.TYPE_SEPARATOR
                     self.set_sub_type(sub_type)
@@ -1135,3 +1377,31 @@ class TSIdent(object):
                     # Since we are only setting the main type we
                     # need to set the sub-type to an empty string...
                     self.set_sub_type("")
+
+    def to_string(self, include_input=False):
+        """
+        Return a string representation of the TSIdent.
+        @return A string representation of the TSIdent.
+        @param include_input If true, the input type and name are included in the
+        identifier.  If false, the 5-part TSID is returned.
+        """
+        location_type = ""
+        scenario = ""
+        sequence_id = ""
+        input_type = ""
+        input_name = ""
+        if (self.location_type is not None) and (len(self.location_type) > 0):
+            location_type = self.location_type + TSIdent.LOC_TYPE_SEPARATOR
+        if (self.scenario is not None) and (len(self.scenario) > 0):
+            # Add the scenario if it is not blank...
+            scenario = "." + self.scenario
+        if (self.sequence_id is not None) and (len(self.sequence_id) > 0):
+            # Add the sequence ID if it is not blank...
+            sequence_id = TSIdent.SEQUENCE_NUMBER_LEFT + self.sequence_id + TSIdent.SEQUENCE_NUMBER_RIGHT
+        if include_input:
+            if (self.input_type is not None) and (len(self.input_type) > 0):
+                input_type = "~" + self.input_type
+            if (self.input_name is not None) and (len(self.input_name) > 0):
+                input_name = "~" + self.input_name
+        return location_type + self.full_location + "." + self.full_source + "." + self.full_type + \
+            "." + self.interval_string + scenario + sequence_id + input_type + input_name
