@@ -76,6 +76,7 @@ import math
 import sys
 
 from RTi.TS.TSIdent import TSIdent
+# from RTi.TS.TSLimits import TSLimits
 from RTi.Util.Time.DateTime import DateTime
 from RTi.Util.Time.TimeInterval import TimeInterval
 
@@ -221,6 +222,9 @@ class TS(object):
         # selectTimeSeries() command) to simplify output by other commands.
         self.selected = None
 
+        # Used for troubleshooting
+        self.debug = False
+
         self.initialize()
 
     def add_to_genesis(self, genesis):
@@ -245,6 +249,34 @@ class TS(object):
         logger = logging.getLogger(__name__)
         logger.warning("TS.allocate_data_space() is virtual, define in derived classes.")
         return 1
+
+    def get_data_interval_base(self):
+        """
+        Return the data interval base.
+        :return: The data interval base.
+        """
+        return self.data_interval_base
+
+    def get_data_interval_mult(self):
+        """
+        Return the data interval mult.
+        :return: The data interval mult.
+        """
+        return self.data_interval_mult
+
+    def get_data_units(self):
+        """
+        Return the data units.
+        :return: The data units.
+        """
+        return self.data_units
+
+    def get_data_units_original(self):
+        """
+        Return the original data units.
+        :return: The original data units.
+        """
+        return self.data_units_original
 
     def get_date1(self):
         """
@@ -284,12 +316,26 @@ class TS(object):
             return None
         return DateTime(date_time=self.date2_original)
 
+    def get_description(self):
+        """
+        Return the time series description
+        :return: the time series description
+        """
+        return self.description
+
     def get_identifier(self):
         """
         Return the time series identifier as TSIdent
         :return: the time series identifier as TSIdent
         """
         return self.tsid
+
+    def get_identifier_string(self):
+        """
+        Return the time series identifier as TSIdent string
+        :return: the time series identifier as TSIdent string
+        """
+        return self.tsid.to_string(False)
 
     def get_location(self):
         """
@@ -329,6 +375,26 @@ class TS(object):
         self.enabled = True
         self.selected = False
         self.editable = False
+
+    def is_data_missing(self, value):
+        """
+        Determine if a data value for the time series is missing.  The missing value can
+        be set to a range of values or a single value, using setMissing().
+        There is no straightforward way to check to see if a value is equal to NaN
+        (the code: if ( value == Double.NaN ) will always return false if one or both
+        values are NaN).  Consequently there is no way to see know if only one or both
+        values is NaN, using the standard operators.  Instead, we assume that NaN
+        should be interpreted as missing and do the check if ( value != value ), which
+        will return true if the value is NaN.  Consequently, code that uses time series
+        data should not check for missing and treat NaN differently because the TS class treats NaN as missing.
+        @return true if the data value is missing, false if not.
+        @param value Value to check.
+        """
+        if math.isnan(value):
+            return True
+        elif (value >= self.missingl) and (value <= self.missingu):
+            return True
+        return False
 
     def set_data_interval(self, base, mult):
         """
@@ -434,14 +500,33 @@ class TS(object):
         if description is not None:
             self.description = description
 
-    def set_identifier(self, tsid):
+    def set_identifier(self, tsident):
         """
         Note that this only sets the identifier but does not set the
         separate data fields (like data type).
-        :param tsid: Time series identifier.
+        :param tsident: Time series identifier as TSIdent object
         """
-        if tsid is not None:
-            self.tsid = TSIdent(TSIdent=tsid)
+        if self.debug:
+            logger = logging.getLogger(__name__)
+
+        if tsident is not None:
+            if isinstance(tsident, TSIdent):
+                if self.debug:
+                    logger.debug("Before setting TSIdent to \"" + str(tsident) + "\" using TSIdent, tsid=" + str(self.tsid))
+                # Make a new copy
+                self.tsid = TSIdent(tsident=tsident)
+                if self.debug:
+                    logger.debug("After setting TSIdent to \"" + str(tsident) + "\" using TSIdent, tsid=" + str(self.tsid))
+            elif isinstance(tsident, str):
+                # Make a new copy
+                logger = logging.getLogger(__name__)
+                if self.debug:
+                    logger.debug("Before setting TSIdent to \"" + str(tsident) + "\" using str, tsid=" + str(self.tsid))
+                self.tsid = TSIdent(identifier=tsident)
+                if self.debug:
+                    logger.debug("After setting TSIdent to \"" + str(tsident) + "\" using str, tsid=" + str(self.tsid))
+            else:
+                raise ValueError("Parameter type " + str(type(tsident)) + " for set_identifier() is not supported.")
 
     def set_input_name(self, input_name):
         """

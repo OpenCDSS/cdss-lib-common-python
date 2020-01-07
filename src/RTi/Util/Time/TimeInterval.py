@@ -71,7 +71,7 @@ class TimeInterval(object):
         self.interval_mult = 0
         self.interval_mult_string = ""
 
-    def getBase(self):
+    def get_base(self):
         """
         Return the interval base (see TimeInterval.INTERVAL*).
         :return: The interval base (see TimeInterval.INTERVAL*).
@@ -84,6 +84,19 @@ class TimeInterval(object):
         :return: The interval multiplier.
         """
         return self.interval_mult
+
+    @staticmethod
+    def is_regular_interval(interval_base):
+        """
+Determine whether an interval is regular.
+@param intervalBase the time interval base to check
+@return true if the interval is regular, false if not (unknown or irregular).
+        """
+        if (interval_base >= TimeInterval.HSECOND) and (interval_base <= TimeInterval.YEAR):
+            return True
+        else:
+            # Irregular and unknown are what are left.
+            return False
 
     @staticmethod
     def parse_interval(interval_string):

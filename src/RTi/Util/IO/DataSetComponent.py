@@ -37,15 +37,16 @@ class DataSetComponent(object):
     LIST_SOURCE_NETWORK_COMPONENT = "Network"
     LIST_SOURCE_LISTFILE = "ListFile"
 
-    def __init__(self, dataset, type, comp=None, deep_copy=None):
+    def __init__(self, dataset, comp_type, comp=None, deep_copy=None):
 
         # Type of component - integer used to increase performance so string lookups don't need to be done.
-        self.type = -1
+        # -if an Enum is used, then comp_type.value is used where needed for comparisons and lookups
+        self.comp_type = -1
 
         # Name of component
         self.name = ""
 
-        # Name of file that will hold the data when saved to disk
+        # Name of file that will hold the data hen saved to disk
         self.data_file_name = ""
 
         # Name of the command file used to create the component, if _created_from is DATA_FROM_COMMANDS
@@ -93,35 +94,41 @@ class DataSetComponent(object):
         # file header, etc.  See the __is_output flag to help indicate when check results should be created.
         self.data_check_results = None
 
-        if type is not None:
-            self.DataSetComponent_init1(dataset, type)
+        if comp_type is not None:
+            self.DataSetComponent_init1(dataset, comp_type)
 
         # if not (comp == None and deep_copy == None):
         #     self.DataSetComponent_init2(comp, dataset, deep_copy)
 
-    def DataSetComponent_init1(self, dataset, type):
+    def DataSetComponent_init1(self, dataset, comp_type):
         """
         Construct the data set component and set values to empty strings and null.
         :param dataset: the DataSet instance that this component belongs to (note that
         the DataSet.addComponent() method must still be called to add the component).
-        :param type: Component type.
+        :param comp_type: Component type.
         """
         self.dataset = dataset
-        if (type < 0) or (type >= len(self.dataset.component_types)):
+        if isinstance(comp_type, int):
+            comp_type_value = comp_type
+        else:
+            # Assume Enum
+            comp_type_value = comp_type.value
+        if (comp_type_value < 0) or (comp_type_value >= len(self.dataset.component_types)):
             # Throw error
-            pass
-        self.type = type
+            raise ValueError("Unrecognized component type value " + comp_type_value)
+        # Allow assignment
+        self.comp_type = comp_type
         # size = 0
         # if self.dataset.component_groups != None:
         #     size = self.dataset.component_groups.length
         # Set whether the component is a group, based on the data set information.
         self.is_group = False
         for component_group in self.dataset.component_groups:
-            if component_group == self.type:
+            if component_group == self.comp_type:
                 self.is_group = True
                 break
         # Set the component name, based on the data set information.
-        self.name = self.dataset.lookupComponentName(self.type)
+        self.name = self.dataset.lookup_component_name(self.comp_type)
 
     def add_component(self, component):
         """
@@ -153,7 +160,7 @@ class DataSetComponent(object):
         Get the component type
         :return: the Component type
         """
-        return self.type
+        return self.comp_type
 
     def get_data(self):
         """
@@ -168,7 +175,7 @@ class DataSetComponent(object):
         """
         return self.data_file_name
 
-    def is_group(self):
+    def get_is_group(self):
         """
         :return: is group
         """

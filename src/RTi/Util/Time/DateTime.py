@@ -309,6 +309,12 @@ class DateTime(object):
         elif date_time is not None:
             self.initialize_DateTime_DateTime(date_time)
 
+    def __str__(self):
+        """
+        Return string representation of instance.
+        """
+        return self.to_string()
+
     def add_day(self, add):
         """
         Add day(s) to the DateTime.  Other fields will be adjusted if necessary.
@@ -348,6 +354,40 @@ class DateTime(object):
                 i += 1
         self.iszero = False
 
+    def add_interval(self, interval, add):
+        """
+        Add a time series interval to the DateTime (see TimeInterval).  This is useful when iterating a date.
+        An irregular interval is ignored (the date is not changed).
+        @param interval Time series base interval.
+        @param add Multiplier for base interval.
+        """
+        # Based on the interval, call lower-level routines...
+
+        if interval == TimeInterval.SECOND:
+            self.add_second(add)
+        elif interval == TimeInterval.MINUTE:
+            self.add_minute(add)
+        elif interval == TimeInterval.HOUR:
+            self.addHour(add)
+        elif interval == TimeInterval.DAY:
+            self.add_day(add)
+        elif interval == TimeInterval.WEEK:
+            self.add_day(7*add)
+        elif interval == TimeInterval.MONTH:
+            self.add_month(add)
+        elif interval == TimeInterval.YEAR:
+            self.add_year(add)
+        elif interval == TimeInterval.IRREGULAR:
+            return
+        else:
+            # Unsupported interval...
+            #// TODO SAM 2007-12-20 Evaluate throwing InvalidTimeIntervalException
+            message = "Interval " + str(interval) + " is unsupported"
+            logger = logging.getLogger(__name__)
+            logger.warning(message)
+            return
+        self.iszero = False
+
     def add_month(self, add):
         """
         Add month(s) to the DateTime.  Other fields will be adjusted if necessary.
@@ -359,11 +399,11 @@ class DateTime(object):
             return
         if add == 1:
             # Dealing with one month...
-            self._month += add
+            self.month += add
             # Have added one month so check if went into the next year
-            if self._month > 12:
+            if self.month > 12:
                 # Have gone into the next year...
-                self._month = 1
+                self.month = 1
                 self.add_year(1)
         # Else...
         # Loop through the number to add/subtract...
@@ -375,11 +415,11 @@ class DateTime(object):
             # No need to reset because it was done in the previous call.
             return
         elif add == -1:
-            self._month -= 1
+            self.month -= 1
             # Have subtracted the specified number so check if in the previous year
-            if self._month < 1:
+            if self.month < 1:
                 # Have gone into the previous year...
-                self._month = 12
+                self.month = 12
                 self.add_year(-1)
         elif add < 0:
             for i in range(add, -1, -1):
@@ -392,7 +432,7 @@ class DateTime(object):
         # Reset time
         self.set_absolute_month()
         self.set_year_day()
-        self._iszero = False
+        self.iszero = False
 
     def add_year(self, add):
         """
@@ -400,9 +440,9 @@ class DateTime(object):
         inconsistency occurs with leap year information.
         :param add: Indicates the number of years to add (can be a multiple and can be negative).
         """
-        self._year += add
+        self.year += add
         self.reset()
-        self._iszero = False
+        self.iszero = False
 
     def get_absolute_month(self):
         """
@@ -410,7 +450,7 @@ class DateTime(object):
         :return: The absolute month (year*12 + month).
         """
         # since some data are public, recompute...
-        return (self.year * 12 + self.month)
+        return self.year * 12 + self.month
 
     def get_day(self):
         """
@@ -521,6 +561,18 @@ class DateTime(object):
         # means the are equal
         return False
 
+    def greater_than_or_equal_to(self, d, precision):
+        """
+        Determine if the DateTime is >= another DateTime.  Time zone is not
+        considered in the comparison (no time zone shift is made).
+        @return true if the instance is >= the given DateTime.
+        @param d DateTime to compare.
+        @param precision The precision used when comparing the DateTime instances.
+        """
+        if not self.less_than(d, precision):
+            return True
+        else:
+            return False
 
     # def getWeekDay(self):
     #     """
@@ -600,14 +652,14 @@ class DateTime(object):
             self.tz = ""
 
         else:
-            # Date/Calendar are ugly to work with, let's get information by formatting strings...
+            # Date/Calendar are ugly to work with, so get information by formatting strings...
 
             # year month
             # Use the formatTimeString routine instead of the following...
             # String format = "yyy M d H m s S"
             # time_date = TimeUtil.getTimeString(d, format)
             format = "%Y %m %d %H %M %S"
-            list = StringUtil.breakStringList(str(d), " ", StringUtil.DELIM_SKIP_BLANKS)
+            list = StringUtil.break_string_list(str(d), " ", StringUtil.DELIM_SKIP_BLANKS)
 
     def initialize_DateTime_DateTime(self, t):
         """
@@ -655,7 +707,7 @@ class DateTime(object):
         Determine if the DateTime is less than another DateTime.  Time zone is not
         considered in the comparison (no time zone shift is made).  The precision of the
         instance is used for the comparison.
-        :param date: DateTime to compare
+        :param t: DateTime to compare
         :return: True if the instance is less than the given DateTime.
         """
         if not self.time_only:
@@ -727,6 +779,15 @@ class DateTime(object):
         # means the are equal
         return False
 
+    def less_than_or_equal_to(self, d):
+        """
+        Determine if the DateTime is <= another.  Time zone is not
+        considered in the comparison (no time zone shift is made).
+        @return true if the DateTime instance is less than or equal to given DateTime.
+        @param d DateTime to compare.
+        """
+        return not self.greater_than(d)
+
     def reset(self):
         """
         Reset the derived data (year day, absolute month, and leap year).  This is
@@ -750,7 +811,7 @@ class DateTime(object):
     def set_day(self, d):
         """
         Set the day
-        :param day: Day
+        :param d: Day
         """
         logger = logging.getLogger("StateMod")
         if (self.behavior_flag & DateTime.DATE_STRICT) != 0:
@@ -976,15 +1037,15 @@ class DateTime(object):
         self.time_only = False
 
         # Set the time zone. Use TimeUtil directly to increase performance...
-        if TimeUtil._time_zone_lookup_method == TimeUtil.LOOKUP_TIME_ZONE_ONCE:
-            if (not TimeUtil._local_time_zone_retrieved):
+        if TimeUtil.time_zone_lookup_method == TimeUtil.LOOKUP_TIME_ZONE_ONCE:
+            if (not TimeUtil.local_time_zone_retrieved):
                 # Need to initialize...
                 #self.shift_time_zone(TimeUtil.getLocalTimeZoneAbbr())
                 pass
             else:
                 # Use the existing data...
-                self.shift_time_zone(TimeUtil._local_time_zone_string)
-        elif TimeUtil._time_zone_lookup_method == TimeUtil.LOOKUP_TIME_ZONE_ALWAYS:
+                self.shift_time_zone(TimeUtil.local_time_zone_string)
+        elif TimeUtil.time_zone_lookup_method == TimeUtil.LOOKUP_TIME_ZONE_ALWAYS:
             #self.shift_time_zone(TimeUtil.getLocalTimeZoneAbbr())
             pass
         self.iszero = False
@@ -1069,3 +1130,43 @@ class DateTime(object):
             # All other time zones
             # Want to change the time zone so compute an offset and apply
             self.set_time_zone(zone)
+
+    def to_string(self, date_format=None):
+        """
+        TODO smalers 2020-01-04 need to implment.
+        :return: formatted string version of DateTime
+        """
+        if date_format is None:
+            # Recursively call after determining format to use
+            # Arrange these in probable order of use...
+            if self.precision == DateTime.PRECISION_MONTH:
+                return self.to_string(DateTime.FORMAT_YYYY_MM)
+            elif self.precision == DateTime.PRECISION_DAY:
+                return self.to_string(DateTime.FORMAT_YYYY_MM_DD)
+        elif date_format == DateTime.FORMAT_YYYY_MM:
+            return \
+                StringUtil.format_string(self.year, "%04d") + "-" + \
+                StringUtil.format_string(self.month, "%02d")
+        elif date_format == DateTime.FORMAT_YYYY_MM_DD:
+            return \
+                StringUtil.format_string(self.year, "%04d") + "-" + \
+                StringUtil.format_string(self.month, "%02d") + "-" + \
+                StringUtil.format_string(self.day, "%02d")
+        elif date_format == DateTime.FORMAT_YYYY_MM_DD_HH_mm:
+            # Default output is ISO-8601
+            return \
+                StringUtil.format_string(self.year, "%04d") + "-" + \
+                StringUtil.format_string(self.month, "%02d") + "-" + \
+                StringUtil.format_string(self.day, "%02d") + " " + \
+                StringUtil.format_string(self.hour, "%02d") + ":" + \
+                StringUtil.format_string(self.minute, "%02d")
+        else:
+            # Assume that hours and minutes but NOT time zone are desired...
+            if self.use_time_zone and (len(self.tz) > 0):
+                prefix = self.tz[0]
+                if (prefix == "-") or (prefix == "+") or self.tz == "Z":
+                    return self.to_string(DateTime.FORMAT_ISO_8601)
+                else:
+                    return self.to_string(DateTime.FORMAT_YYYY_MM_DD_HH_mm_ZZZ)
+            else:
+                return self.to_string(DateTime.FORMAT_YYYY_MM_DD_HH_mm)

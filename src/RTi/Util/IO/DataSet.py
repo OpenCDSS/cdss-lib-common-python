@@ -21,7 +21,7 @@
 #
 # NoticeEnd
 
-from RTi.Util.IO.DataSetComponent import DataSetComponent
+# from RTi.Util.IO.DataSetComponent import DataSetComponent
 import logging
 
 
@@ -33,7 +33,7 @@ class DataSet(object):
     """
 
     def __init__(self, component_types=None, component_names=None, component_groups=None,
-                 component_group_assignments=None, component_group_primaries=None, type=None,
+                 component_group_assignments=None, component_group_primaries=None, dataset_type=None,
                  dataset_dir=None, basename=None):
 
         # Base name for data set, used to provide default file names when creating new files
@@ -41,14 +41,14 @@ class DataSet(object):
 
         # List of data components in the data set. Each component is a type that is described
         # in the lookup arrays for the data set, and has data for the component. Components are
-        # hierarchical and therfore the top level components will contain groups.
+        # hierarchical and therefore the top level components will contain groups.
 
         self.components = None
 
         # Array of component names, used in lookups
         self.component_names = None
 
-        # Array of component types (as integers), corresponding to the component names
+        # Array of component types (as integers or Enum of int), corresponding to the component names
         self.component_types = None
 
         # Array of component types (as integers) that are group components.
@@ -67,35 +67,38 @@ class DataSet(object):
         # Name of the data set file (XML file).
         self.dataset_filename = ""
 
-        self.type = -1
+        self.dataset_type = -1
 
         # print("component_types: " + str(component_types))
         # print("component_names: " + str(component_names))
         # print("component_groups: " + str(component_groups))
         # print("component_group_assignments: " + str(component_group_assignments))
         # print("component_group_primaries: " + str(component_group_primaries))
-        # print("type: " + str(type))
+        # print("dataset_type: " + str(dataset_type))
         # print("dataset_dir: " + str(dataset_dir))
         # print("basename: " + str(basename))
 
         # Call the appropriate constructor given the parameters passed to __init__
         if not (component_types is None and component_names is None and component_groups is None
                 and component_group_assignments is None and component_group_primaries is None):
-            self.DataSet_init2(component_types, component_names, component_groups, component_group_assignments,
+            # Constructor with all the data lists
+            self.dataset_init2(component_types, component_names, component_groups, component_group_assignments,
                                component_group_primaries)
         elif not (type is None and dataset_dir is None and basename is None):
-            self.DataSet_init3(type, dataset_dir, basename)
+            # Constructor with dataset_type, dataset_dir, basename
+            self.dataset_init3(dataset_type, dataset_dir, basename)
         else:
-            self.DataSet_initDefault()
+            # Constructor with no arguments
+            self.dataset_init_default()
 
-    def DataSet_initDefault(self):
+    def dataset_init_default(self):
         """
         Construct a blank data set. It is expected that other information will be set during
         further processing. Component groups are not initialized until a data set type is set.
         """
         self.components = []
 
-    def DataSet_init2(self, component_types, component_names, component_groups, component_group_assignments,
+    def dataset_init2(self, component_types, component_names, component_groups, component_group_assignments,
                       component_group_primaries):
         """
         Construct a blank data set.  It is expected that other information will be set
@@ -123,17 +126,17 @@ class DataSet(object):
         self.component_group_assignments = component_group_assignments
         self.component_group_primaries = component_group_primaries
 
-    def DataSet_init3(self, type, dataset_dir, basename):
+    def dataset_init3(self, dataset_type, dataset_dir, basename):
         """
         Construct a blank data set.  Specific output files, by default, will use the
         output directory and base file name in output file names.  The derived class
         method should initialize the specific data components.
-        :param type: Data set type.
+        :param dataset_type: Data set type.
         :param dataset_dir: Data set directory.
         :param basename: Basename for files (no directory).
         """
         self.components = []
-        self.type = type
+        self.dataset_type = dataset_type
         self.dataset_dir = dataset_dir
         self.basename = basename
 
@@ -144,27 +147,57 @@ class DataSet(object):
         """
         self.components.append(comp)
 
-    def get_component_for_component_type(self, type):
+    def get_component_for_component_type(self, comp_type):
         """
         Return the component for the requested data component type.
-        :param type: Component type
+        :param comp_type: Component type as StateMod_DataSetComponentType or int
         :return: the component for the requested data component type or null if
         the component is not in the data set.
         """
-        # logger = logging.getLogger("StateMod")
-        # logging.info("looking up component " + type)
+        logger = logging.getLogger(__name__)
+        debug = False  # used to troubleshoot
+        if isinstance(comp_type, int):
+            comp_type_value = comp_type
+            if debug:
+                logging.info("Looking up component matching requested type " + str(comp_type) + " integer value")
+        else:
+            # Assume Enum
+            comp_type_value = comp_type.value
+            if debug:
+                logging.info("Looking up component matching requested type " + str(comp_type) +
+                             "=" + str(comp_type_value) + " enumeration value")
         for component in self.components:
-            # logging.info("Checking " + comp.get_component_type())
-            if component.get_component_type() == type:
+            if isinstance(component.get_component_type(), int):
+                get_component_type_value = component.get_component_type()
+                if debug:
+                    logging.info("Checking " + str(get_component_type_value) + " integer value")
+            else:
+                # Assume Enum
+                get_component_type_value = component.get_component_type().value
+                if debug:
+                    logging.info("Checking " + str(component.get_component_type()) + "=" +
+                                 str(get_component_type_value) + " enumeration value")
+            if get_component_type_value == comp_type_value:
                 return component
             # If the component is a group and did not match the type, check
             # the sub-types in the component...
-            if component.is_group():
+            if component.get_is_group():
+                # Data is the list of components in the group
                 v = component.get_data()
                 if v is not None:
-                    for component in v:
-                        if component.get_component_type() == type:
-                            return component
+                    for component2 in v:
+                        if isinstance(component2.get_component_type(), int):
+                            get_component_type_value2 = component2.get_component_type()
+                            if debug:
+                                logging.info("Checking group " + str(get_component_type_value2) + " integer value")
+                        else:
+                            # Assume Enum
+                            get_component_type_value2 = component2.get_component_type().value
+                            if debug:
+                                logging.info("Checking group " + str(component2.get_component_type()) + "=" +
+                                             str(get_component_type_value2) + " enumeration value")
+                        if get_component_type_value2 == comp_type_value:
+                            return component2
         return None
 
     def get_dataset_directory(self):
@@ -186,12 +219,12 @@ class DataSet(object):
             if component_type == component_type_search:
                 return self.component_names[i]
 
-    def set_dataset_directory(self, dir):
+    def set_dataset_directory(self, dataset_dir):
         """
         Set the directory for the data set.
-        :param dir: Directory for the data set.
+        :param dataset_dir: Directory for the data set.
         """
-        self.dataset_dir = dir
+        self.dataset_dir = dataset_dir
 
     def set_dataset_filename(self, filename):
         """
@@ -200,15 +233,15 @@ class DataSet(object):
         """
         self.dataset_filename = filename
 
-    def set_dataset_type(self, type, initialize_components):
+    def set_dataset_type(self, dataset_type, initialize_components):
         """
         Set the data set type.
-        :param type: Data set type.
+        :param dataset_type: Data set type.
         :param initialize_components: If true, the components are cleared and the
         component groups for the type are initialized by calling the
         initializeDataSet() method, which should be defined in the extended class.
         """
-        self.type = type
+        self.dataset_type = dataset_type
         if initialize_components:
             self.components.clear()
 

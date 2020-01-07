@@ -108,7 +108,7 @@ class MonthTS(TS):
         if not value:
             value = self.missing
 
-        if not self.date1 or not self.date2:
+        if (self.date1 is None) or (self.date2 is None):
             logger.warning("Dates have not been set. Cannot allocate data space.")
             return 1
         if self.data_interval_mult != 1:
@@ -116,7 +116,7 @@ class MonthTS(TS):
             logger.warning("Only know how to handle 1 month data, not " + str(self.data_interval_mult) + "-month")
             return 1
 
-        nyears = self.date2.get_year() - self.date1.get_year()
+        nyears = self.date2.get_year() - self.date1.get_year() + 1
 
         if nyears == 0:
             logger.warning("TS has 0 years POR, maybe dates haven't been set yet")
@@ -176,17 +176,67 @@ class MonthTS(TS):
         datasize = end_date.get_absolute_month() - start_date.get_absolute_month() + 1
         return datasize
 
+    def get_data_value(self, date):
+        """
+        Return the data value for a date.
+        <pre>
+                 Monthly data is stored in a two-dimensional array:
+                 |----------------> 12 calendar months
+                 |
+                \|/
+               year
+        </pre>
+        @return The data value corresponding to the date, or missing if the date is not found.
+        @param date Date of interest.
+        """
+        # Do not define routine here to increase performance.
+
+        if self.data is None:
+            return self.missing
+
+        # Check the date coming in...
+
+        amon = date.get_absolute_month()
+
+        logger = None
+        debug = False
+        if (amon < self.min_amon) or (amon > self.max_amon):
+            # Print within debug to optimize performance...
+            if debug:
+                logger = logging.getLogger(__name__)
+                logger.warning(str(date) + " not within POR (" + str(self.date1) + " - " + str(self.date2) + ")")
+            return self.missing
+
+        # THIS CODE NEEDS TO BE EQUIVALENT IN setDataValue...
+
+        row = date.get_year() - self.date1.get_year()
+        column = date.get_month() - 1  # Zero offset!
+
+        # ... END OF EQUIVALENT CODE.
+
+        if debug:
+            logger.debug(self.data[row][column] + " for " + str(date) + " from _data[" +
+                         str(row) + "][" + str(column) + "]")
+
+        logger = logging.getLogger(__name__)
+        value = self.data[row][column]
+        if debug:
+            logger.info("Getting data for " + str(date) + " row=" + str(row) + " column=" + str(column) + " value=" +
+                        str(value))
+        return value
+
     def set_data_value(self, date, value):
         """
         Set the data value for the specified date.
         :param date: Date of interest
         :param value: Value corresponding to date.
         """
-        # Do not define routine here to increase performance.
+
+        debug = False
 
         # Check the date coming in...
 
-        if date is not None:
+        if date is None:
             return
 
         amon = date.get_absolute_month()
@@ -200,8 +250,13 @@ class MonthTS(TS):
         row = date.get_year() - self.date1.get_year()
         column = date.get_month() - 1  # Zero offset!
 
-        # ... END OF EQUIVELENT CODE.
+        # ... END OF EQUIVALENT CODE.
 
         # Set the dirty flag so that we know to recompute the limits if desired...
         self.dirty = True
         self.data[row][column] = value
+
+        if debug:
+            logger = logging.getLogger(__name__)
+            logger.info("Setting data for " + str(date) + " row=" + str(row) + " column=" + str(column) + " value=" +
+                        str(value))

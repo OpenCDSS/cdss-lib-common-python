@@ -134,6 +134,18 @@ class TimeUtil(ABC):
             return False
 
     @staticmethod
+    def month_abbreviation(month):
+        """
+        Return a string abbreviation for the month (e.g., "Jan").
+        @return A string abbreviation for the month, or "" if not a valid month.
+        @param month Month number, in range 1-12.
+        """
+        if (month < 1) or (month > 12):
+            return ""
+        else:
+            return TimeUtil.MONTH_ABBREVIATIONS[month - 1]
+
+    @staticmethod
     def num_days_in_month(month, year):
         """
         Return the number of days in a month, checking for leap year for February.
@@ -162,7 +174,7 @@ class TimeUtil(ABC):
         :param dt: The DateTime object to examine.
         :return: The number of days in a month, or zero if an error.
         """
-        return TimeUtil.num_days_in_month_from_datetime(dt.getMonth(), dt.getYear())
+        return TimeUtil.num_days_in_month(dt.getMonth(), dt.getYear())
 
     @staticmethod
     def num_days_in_months(month0, year0, month1, year1):
